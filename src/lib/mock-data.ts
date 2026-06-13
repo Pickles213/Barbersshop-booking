@@ -4,6 +4,79 @@ import type {
   UpcomingBookingRow,
 } from "@/types/db";
 
+export interface MockBarber {
+  id: string;
+  name: string;
+  specialization: string;
+  experience_years: number;
+  bio: string;
+  rating: number;
+  is_active: boolean;
+  avatar_initials: string;
+  portfolio: string[];
+}
+
+export const mockBarbers: MockBarber[] = [
+  {
+    id: "b1",
+    name: "Marco Reyes",
+    specialization: "Classic Fades & Skin Fades",
+    experience_years: 8,
+    bio: "Senior barber specializing in precision fades and beard sculpting.",
+    rating: 4.9,
+    is_active: true,
+    avatar_initials: "MR",
+    portfolio: [
+      "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&q=80",
+      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=80",
+      "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&q=80",
+    ],
+  },
+  {
+    id: "b2",
+    name: "Jules Santos",
+    specialization: "Modern Cuts & Textured Styles",
+    experience_years: 6,
+    bio: "Loves crafting textured crops, curtains, and modern pompadours.",
+    rating: 4.8,
+    is_active: true,
+    avatar_initials: "JS",
+    portfolio: [
+      "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&q=80",
+      "https://images.unsplash.com/photo-1521490878406-d77df8560b3a?w=600&q=80",
+    ],
+  },
+  {
+    id: "b3",
+    name: "Eli Mendoza",
+    specialization: "Hot Towel Shaves & Beard Care",
+    experience_years: 10,
+    bio: "Old-school straight razor shaves and beard grooming specialist.",
+    rating: 4.7,
+    is_active: true,
+    avatar_initials: "EM",
+    portfolio: [
+      "https://images.unsplash.com/photo-1517832606299-7ae9b720a186?w=600&q=80",
+      "https://images.unsplash.com/photo-1593702275687-f8b402bf1fb5?w=600&q=80",
+      "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=600&q=80",
+      "https://images.unsplash.com/photo-1622296089863-eb7fc530daa8?w=600&q=80",
+    ],
+  },
+  {
+    id: "b4",
+    name: "Sam Villar",
+    specialization: "Kids Cuts & Family Styles",
+    experience_years: 4,
+    bio: "Patient and friendly — a favorite with first-time customers.",
+    rating: 4.6,
+    is_active: false,
+    avatar_initials: "SV",
+    portfolio: [
+      "https://images.unsplash.com/photo-1622287162716-f311baa1a2b8?w=600&q=80",
+    ],
+  },
+];
+
 export const mockStats: DashboardStats = {
   todayBookings: 24,
   weeklyBookings: 142,
