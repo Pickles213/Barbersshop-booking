@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ComingSoon } from "@/components/admin/coming-soon";
+import { SchedulesPage } from "@/components/admin/schedules-page";
 
 export const Route = createFileRoute("/admin/schedules")({
   head: () => ({
@@ -9,11 +9,5 @@ export const Route = createFileRoute("/admin/schedules")({
       { name: "description", content: "Connect Supabase to manage weekly schedules, breaks and time off." },
     ],
   }),
-  component: () => (
-    <ComingSoon
-      title="Schedules"
-      subtitle="Working hours and unavailability"
-      description="Connect Supabase to manage weekly schedules, breaks and time off."
-    />
-  ),
+  component: SchedulesPage,
 });
