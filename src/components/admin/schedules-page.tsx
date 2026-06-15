@@ -30,7 +30,7 @@ export function SchedulesPage() {
   });
 
   const updateSched = useMutation({
-    mutationFn: async (v: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async (v: { id: string; patch: any }) => {
       const { error } = await supabase.from("schedules").update(v.patch).eq("id", v.id);
       if (error) throw error;
     },

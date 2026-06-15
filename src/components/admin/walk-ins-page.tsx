@@ -73,7 +73,7 @@ export function WalkInsPage() {
   });
 
   const updateWalkin = useMutation({
-    mutationFn: async (vars: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async (vars: { id: string; patch: any }) => {
       const { error } = await supabase.from("walk_ins").update(vars.patch).eq("id", vars.id);
       if (error) throw error;
     },
