@@ -1,151 +1,72 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { DashboardHeader } from "./dashboard-header";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { formatPHP, mockBarberPerformance } from "@/lib/mock-data";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const revenueByService = [
-  { service: "Classic Fade", revenue: 82800 },
-  { service: "Skin Fade", revenue: 71000 },
-  { service: "Combo", revenue: 72000 },
-  { service: "Beard Trim", revenue: 30250 },
-  { service: "Hot Towel", revenue: 52800 },
-  { service: "Kids Cut", revenue: 19200 },
-];
-
-const bookingsByStatus = [
-  { name: "Completed", value: 412, color: "var(--color-primary)" },
-  { name: "Confirmed", value: 98, color: "#10b981" },
-  { name: "Pending", value: 44, color: "#f59e0b" },
-  { name: "Cancelled", value: 22, color: "#ef4444" },
-  { name: "No-show", value: 11, color: "#94a3b8" },
-];
-
-const monthlyTrend = [
-  { month: "Jan", bookings: 412, revenue: 168000 },
-  { month: "Feb", bookings: 398, revenue: 161200 },
-  { month: "Mar", bookings: 467, revenue: 192300 },
-  { month: "Apr", bookings: 521, revenue: 211500 },
-  { month: "May", bookings: 548, revenue: 226400 },
-  { month: "Jun", bookings: 587, revenue: 184250 },
-];
-
-const tooltipStyle = {
-  backgroundColor: "var(--color-popover)",
-  border: "1px solid var(--color-border)",
-  borderRadius: 8,
-  fontSize: 12,
-};
+const COLORS = ["#6366f1", "#22c55e", "#eab308", "#ef4444", "#06b6d4", "#a855f7"];
 
 export function ReportsPage() {
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["bookings", "all"],
+    queryFn: async () => (await supabase.from("bookings").select("*, service:services(name), barber:barbers(name)")).data ?? [],
+  });
+
+  const byService = Object.values(bookings.reduce<Record<string, { name: string; revenue: number }>>((acc, b: any) => {
+    const name = b.service?.name ?? "—";
+    if (!acc[name]) acc[name] = { name, revenue: 0 };
+    acc[name].revenue += Number(b.price);
+    return acc;
+  }, {}));
+
+  const byStatus = Object.values(bookings.reduce<Record<string, { name: string; value: number }>>((acc, b: any) => {
+    if (!acc[b.status]) acc[b.status] = { name: b.status, value: 0 };
+    acc[b.status].value += 1;
+    return acc;
+  }, {}));
+
+  const byBarber = Object.values(bookings.reduce<Record<string, { name: string; bookings: number; revenue: number }>>((acc, b: any) => {
+    const name = b.barber?.name ?? "—";
+    if (!acc[name]) acc[name] = { name, bookings: 0, revenue: 0 };
+    acc[name].bookings += 1;
+    acc[name].revenue += Number(b.price);
+    return acc;
+  }, {}));
+
+  const totalRevenue = bookings.reduce((s, b: any) => s + Number(b.price), 0);
+
   return (
     <div className="space-y-6">
-      <DashboardHeader title="Reports" subtitle="Business analytics and performance" />
+      <DashboardHeader title="Reports" subtitle="Performance insights from your bookings" />
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Card><CardContent className="p-5"><p className="text-xs uppercase text-muted-foreground">Total Bookings</p><p className="mt-1 text-2xl font-bold">{bookings.length}</p></CardContent></Card>
+        <Card><CardContent className="p-5"><p className="text-xs uppercase text-muted-foreground">Total Revenue</p><p className="mt-1 text-2xl font-bold">₱{totalRevenue.toLocaleString()}</p></CardContent></Card>
+        <Card><CardContent className="p-5"><p className="text-xs uppercase text-muted-foreground">Completed</p><p className="mt-1 text-2xl font-bold">{bookings.filter((b: any) => b.status === "completed").length}</p></CardContent></Card>
+        <Card><CardContent className="p-5"><p className="text-xs uppercase text-muted-foreground">Cancelled</p><p className="mt-1 text-2xl font-bold">{bookings.filter((b: any) => b.status === "cancelled").length}</p></CardContent></Card>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Revenue by Service</CardTitle>
-            <CardDescription>Last 30 days</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueByService} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis dataKey="service" stroke="var(--color-muted-foreground)" fontSize={11} />
-                  <YAxis stroke="var(--color-muted-foreground)" fontSize={11} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatPHP(v)} />
-                  <Bar dataKey="revenue" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardHeader><CardTitle>Revenue by service</CardTitle></CardHeader>
+          <CardContent style={{ height: 300 }}>
+            <ResponsiveContainer><BarChart data={byService}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Bar dataKey="revenue" fill="#6366f1" /></BarChart></ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>Bookings by Status</CardTitle>
-            <CardDescription>Distribution this month</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={bookingsByStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={56} outerRadius={92} paddingAngle={2}>
-                    {bookingsByStatus.map((s) => <Cell key={s.name} fill={s.color} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <CardHeader><CardTitle>Bookings by status</CardTitle></CardHeader>
+          <CardContent style={{ height: 300 }}>
+            <ResponsiveContainer><PieChart><Pie data={byStatus} dataKey="value" nameKey="name" outerRadius={100} label>{byStatus.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>Barber performance</CardTitle></CardHeader>
+          <CardContent style={{ height: 300 }}>
+            <ResponsiveContainer><BarChart data={byBarber}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Legend /><Bar dataKey="bookings" fill="#22c55e" /><Bar dataKey="revenue" fill="#6366f1" /></BarChart></ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Trend</CardTitle>
-          <CardDescription>Bookings and revenue over 6 months</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyTrend} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="month" stroke="var(--color-muted-foreground)" fontSize={11} />
-                <YAxis yAxisId="left" stroke="var(--color-muted-foreground)" fontSize={11} />
-                <YAxis yAxisId="right" orientation="right" stroke="var(--color-muted-foreground)" fontSize={11} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="bookings" stroke="var(--color-primary)" strokeWidth={2} />
-                <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Barber Performance</CardTitle>
-          <CardDescription>Bookings handled this month</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockBarberPerformance} layout="vertical" margin={{ top: 8, right: 8, left: 20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis type="number" stroke="var(--color-muted-foreground)" fontSize={11} />
-                <YAxis dataKey="barber_name" type="category" stroke="var(--color-muted-foreground)" fontSize={11} width={100} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="bookings_count" fill="var(--color-primary)" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

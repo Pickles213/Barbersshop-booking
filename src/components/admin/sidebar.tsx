@@ -1,4 +1,6 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   Scissors,
@@ -41,6 +43,13 @@ export function AdminSidebar() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (path: string) =>
     currentPath === path || currentPath.startsWith(path + "/");
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/auth" });
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -83,7 +92,7 @@ export function AdminSidebar() {
       <SidebarFooter className="border-t">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Logout">
+            <SidebarMenuButton tooltip="Logout" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               <span>Logout</span>
             </SidebarMenuButton>

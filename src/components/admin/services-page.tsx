@@ -1,131 +1,215 @@
 import { useState } from "react";
-import { Pencil, Plus, Scissors, Search, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { DashboardHeader } from "./dashboard-header";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { formatPHP } from "@/lib/mock-data";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
-interface Row {
+type Service = {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
+  category: string;
   price: number;
   duration_minutes: number;
-  category: string;
   is_active: boolean;
-  bookings: number;
-}
+};
 
-const seed: Row[] = [
-  { id: "s1", name: "Classic Fade", description: "Tapered fade with scissor work on top.", price: 450, duration_minutes: 45, category: "Haircut", is_active: true, bookings: 184 },
-  { id: "s2", name: "Skin Fade", description: "Bald fade with sharp lineup.", price: 500, duration_minutes: 50, category: "Haircut", is_active: true, bookings: 142 },
-  { id: "s3", name: "Beard Trim", description: "Shape, line and condition.", price: 250, duration_minutes: 25, category: "Beard", is_active: true, bookings: 121 },
-  { id: "s4", name: "Hot Towel Shave", description: "Straight razor with hot towel finish.", price: 600, duration_minutes: 40, category: "Beard", is_active: true, bookings: 88 },
-  { id: "s5", name: "Hair + Beard Combo", description: "Full haircut and beard service.", price: 750, duration_minutes: 75, category: "Combo", is_active: true, bookings: 96 },
-  { id: "s6", name: "Kids Cut", description: "Cuts for children 12 and below.", price: 300, duration_minutes: 30, category: "Haircut", is_active: true, bookings: 64 },
-  { id: "s7", name: "Hair Color", description: "Single-tone color with toner.", price: 1200, duration_minutes: 90, category: "Color", is_active: false, bookings: 22 },
-];
+const empty: Omit<Service, "id"> = {
+  name: "", description: "", category: "Haircut", price: 0, duration_minutes: 30, is_active: true,
+};
 
 export function ServicesPage() {
-  const [rows, setRows] = useState<Row[]>(seed);
-  const [q, setQ] = useState("");
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Service | null>(null);
+  const [form, setForm] = useState(empty);
 
-  const filtered = rows.filter(
-    (r) =>
-      r.name.toLowerCase().includes(q.toLowerCase()) ||
-      r.category.toLowerCase().includes(q.toLowerCase()),
+  const { data: services = [], isLoading } = useQuery({
+    queryKey: ["services"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("services").select("*").order("name");
+      if (error) throw error;
+      return data as Service[];
+    },
+  });
+
+  const upsert = useMutation({
+    mutationFn: async () => {
+      if (editing) {
+        const { error } = await supabase.from("services").update(form).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("services").insert(form);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(editing ? "Service updated" : "Service created");
+      setOpen(false);
+      setEditing(null);
+      setForm(empty);
+      qc.invalidateQueries({ queryKey: ["services"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("services").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Service deleted");
+      qc.invalidateQueries({ queryKey: ["services"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async (s: Service) => {
+      const { error } = await supabase.from("services").update({ is_active: !s.is_active }).eq("id", s.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
+  });
+
+  const startEdit = (s: Service) => {
+    setEditing(s);
+    setForm({
+      name: s.name, description: s.description ?? "", category: s.category,
+      price: s.price, duration_minutes: s.duration_minutes, is_active: s.is_active,
+    });
+    setOpen(true);
+  };
+  const startNew = () => { setEditing(null); setForm(empty); setOpen(true); };
+
+  const filtered = services.filter((s) =>
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.category.toLowerCase().includes(search.toLowerCase())
   );
-
-  const toggle = (id: string) =>
-    setRows((p) => p.map((r) => (r.id === id ? { ...r, is_active: !r.is_active } : r)));
-
-  const stats = [
-    { label: "Total Services", value: rows.length },
-    { label: "Active", value: rows.filter((r) => r.is_active).length },
-    { label: "Avg. Price", value: formatPHP(rows.reduce((s, r) => s + r.price, 0) / rows.length) },
-    { label: "Avg. Duration", value: `${Math.round(rows.reduce((s, r) => s + r.duration_minutes, 0) / rows.length)} min` },
-  ];
 
   return (
     <div className="space-y-6">
-      <DashboardHeader title="Services" subtitle="Manage your service catalog" />
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="p-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{s.label}</p>
-              <p className="mt-2 text-2xl font-bold tracking-tight">{s.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <DashboardHeader
+        title="Services"
+        subtitle="Manage service catalog, prices and durations"
+        actions={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={startNew}><Plus className="mr-2 h-4 w-4" />New service</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{editing ? "Edit service" : "New service"}</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Name</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Description</Label>
+                  <Input value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Category</Label>
+                    <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Haircut", "Beard", "Shave", "Combo", "Other"].map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Price (₱)</Label>
+                    <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Duration (min)</Label>
+                    <Input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 0 })} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 pt-2">
+                  <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
+                  <Label>Active</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={() => upsert.mutate()} disabled={upsert.isPending || !form.name.trim()}>
+                  {editing ? "Save" : "Create"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       <Card>
-        <CardContent className="p-0">
-          <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative max-w-sm flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search services or category" className="pl-9" />
-            </div>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Service
-            </Button>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Bookings</TableHead>
-                  <TableHead>Active</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base font-medium">
+            <Search className="h-4 w-4" />
+            <Input className="max-w-xs" placeholder="Search services…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Loading…</TableCell></TableRow>}
+              {!isLoading && filtered.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No services found.</TableCell></TableRow>
+              )}
+              {filtered.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>
+                    <div className="font-medium">{s.name}</div>
+                    {s.description && <div className="text-xs text-muted-foreground">{s.description}</div>}
+                  </TableCell>
+                  <TableCell><Badge variant="outline">{s.category}</Badge></TableCell>
+                  <TableCell>₱{Number(s.price).toLocaleString()}</TableCell>
+                  <TableCell>{s.duration_minutes} min</TableCell>
+                  <TableCell>
+                    <Switch checked={s.is_active} onCheckedChange={() => toggle.mutate(s)} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Delete ${s.name}?`)) remove.mutate(s.id); }}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
-                          <Scissors className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium">{r.name}</p>
-                          <p className="truncate text-xs text-muted-foreground">{r.description}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge variant="secondary">{r.category}</Badge></TableCell>
-                    <TableCell className="text-muted-foreground">{r.duration_minutes} min</TableCell>
-                    <TableCell className="font-medium">{formatPHP(r.price)}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.bookings}</TableCell>
-                    <TableCell><Switch checked={r.is_active} onCheckedChange={() => toggle(r.id)} /></TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

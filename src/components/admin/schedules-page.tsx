@@ -1,110 +1,127 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { CalendarOff, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 import { DashboardHeader } from "./dashboard-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { mockBarbers } from "@/lib/mock-data";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-type Shift = { start: string; end: string } | "off";
-
-const schedules: Record<string, Shift[]> = {
-  b1: [{ start: "09:00", end: "18:00" }, { start: "09:00", end: "18:00" }, "off", { start: "10:00", end: "19:00" }, { start: "10:00", end: "20:00" }, { start: "09:00", end: "20:00" }, { start: "10:00", end: "17:00" }],
-  b2: [{ start: "10:00", end: "19:00" }, { start: "10:00", end: "19:00" }, { start: "10:00", end: "19:00" }, "off", { start: "10:00", end: "20:00" }, { start: "10:00", end: "20:00" }, "off"],
-  b3: ["off", { start: "11:00", end: "20:00" }, { start: "11:00", end: "20:00" }, { start: "11:00", end: "20:00" }, { start: "11:00", end: "20:00" }, { start: "10:00", end: "20:00" }, { start: "10:00", end: "18:00" }],
-  b4: [{ start: "09:00", end: "15:00" }, "off", { start: "09:00", end: "15:00" }, { start: "09:00", end: "15:00" }, "off", { start: "09:00", end: "18:00" }, { start: "09:00", end: "18:00" }],
-};
-
-const unavailability = [
-  { barber: "Marco Reyes", start: "2026-06-20", end: "2026-06-22", reason: "Family vacation" },
-  { barber: "Eli Mendoza", start: "2026-06-18", end: "2026-06-18", reason: "Medical appointment" },
-];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function SchedulesPage() {
-  const [barber, setBarber] = useState<string>("all");
-  const visible = barber === "all" ? mockBarbers : mockBarbers.filter((b) => b.id === barber);
+  const qc = useQueryClient();
+  const { data: barbers = [] } = useQuery({
+    queryKey: ["barbers"],
+    queryFn: async () => (await supabase.from("barbers").select("id, name").order("name")).data ?? [],
+  });
+  const { data: schedules = [] } = useQuery({
+    queryKey: ["schedules"],
+    queryFn: async () => (await supabase.from("schedules").select("*")).data ?? [],
+  });
+  const { data: timeOff = [] } = useQuery({
+    queryKey: ["time_off"],
+    queryFn: async () => (await supabase.from("time_off").select("*, barber:barbers(name)").order("start_date")).data ?? [],
+  });
+
+  const updateSched = useMutation({
+    mutationFn: async (v: { id: string; patch: any }) => {
+      const { error } = await supabase.from("schedules").update(v.patch).eq("id", v.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedules"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const [toForm, setToForm] = useState({ barber_id: "", start_date: "", end_date: "", reason: "" });
+  const addTimeOff = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("time_off").insert(toForm);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Time off added");
+      setToForm({ barber_id: "", start_date: "", end_date: "", reason: "" });
+      qc.invalidateQueries({ queryKey: ["time_off"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeTimeOff = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("time_off").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["time_off"] }),
+  });
 
   return (
     <div className="space-y-6">
-      <DashboardHeader title="Schedules" subtitle="Weekly hours, breaks and time off" showActions={false} />
+      <DashboardHeader title="Schedules" subtitle="Weekly shifts and time off" />
 
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground">Showing</span>
-        <Select value={barber} onValueChange={setBarber}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All barbers</SelectItem>
-            {mockBarbers.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-4">
-        {visible.map((b) => (
+      {barbers.map((b) => {
+        const rows = DAYS.map((_, d) => schedules.find((s) => s.barber_id === b.id && s.day_of_week === d));
+        return (
           <Card key={b.id}>
-            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-              <Avatar className="h-10 w-10"><AvatarFallback>{b.avatar_initials}</AvatarFallback></Avatar>
-              <div className="min-w-0 flex-1">
-                <CardTitle className="text-base">{b.name}</CardTitle>
-                <CardDescription>{b.specialization}</CardDescription>
-              </div>
-              <Badge variant={b.is_active ? "default" : "secondary"}>{b.is_active ? "Active" : "Off"}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-                {days.map((d, i) => {
-                  const shift = schedules[b.id]?.[i];
-                  const off = shift === "off" || !shift;
+            <CardHeader><CardTitle className="text-base">{b.name}</CardTitle></CardHeader>
+            <CardContent className="overflow-x-auto">
+              <div className="grid min-w-[700px] grid-cols-7 gap-2">
+                {DAYS.map((d, i) => {
+                  const s = rows[i];
+                  if (!s) return <div key={d} className="rounded border p-2 text-center text-xs text-muted-foreground">{d}<br/>—</div>;
                   return (
-                    <div
-                      key={d}
-                      className={`rounded-lg border p-3 ${off ? "bg-muted/50" : "bg-background"}`}
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{d}</p>
-                      {off ? (
-                        <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
-                          <CalendarOff className="h-3.5 w-3.5" /> Day off
-                        </p>
-                      ) : (
-                        <p className="mt-2 flex items-center gap-1 text-sm font-medium">
-                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          {shift.start}–{shift.end}
-                        </p>
-                      )}
+                    <div key={d} className="space-y-1 rounded border p-2 text-xs">
+                      <div className="font-medium">{d}</div>
+                      <div className="flex items-center gap-1">
+                        <Switch checked={!s.is_off} onCheckedChange={(v) => updateSched.mutate({ id: s.id, patch: { is_off: !v } })} />
+                        <span className="text-muted-foreground">{s.is_off ? "Off" : "On"}</span>
+                      </div>
+                      <Input type="time" disabled={s.is_off} value={s.start_time.slice(0,5)} onChange={(e) => updateSched.mutate({ id: s.id, patch: { start_time: e.target.value } })} className="h-7" />
+                      <Input type="time" disabled={s.is_off} value={s.end_time.slice(0,5)} onChange={(e) => updateSched.mutate({ id: s.id, patch: { end_time: e.target.value } })} className="h-7" />
                     </div>
                   );
                 })}
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        );
+      })}
 
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming time off</CardTitle>
-          <CardDescription>Scheduled unavailability</CardDescription>
+          <CardTitle>Time off</CardTitle>
+          <CardDescription>Add upcoming leaves</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {unavailability.map((u, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="font-medium">{u.barber}</p>
-                <p className="text-xs text-muted-foreground">{u.reason}</p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
+            <Select value={toForm.barber_id} onValueChange={(v) => setToForm({ ...toForm, barber_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Barber" /></SelectTrigger>
+              <SelectContent>{barbers.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Input type="date" value={toForm.start_date} onChange={(e) => setToForm({ ...toForm, start_date: e.target.value })} />
+            <Input type="date" value={toForm.end_date} onChange={(e) => setToForm({ ...toForm, end_date: e.target.value })} />
+            <Input placeholder="Reason" value={toForm.reason} onChange={(e) => setToForm({ ...toForm, reason: e.target.value })} />
+            <Button onClick={() => addTimeOff.mutate()} disabled={!toForm.barber_id || !toForm.start_date || !toForm.end_date}>
+              <Plus className="mr-2 h-4 w-4" />Add
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {timeOff.length === 0 && <p className="text-sm text-muted-foreground">No upcoming time off.</p>}
+            {timeOff.map((t) => (
+              <div key={t.id} className="flex items-center justify-between rounded border p-3 text-sm">
+                <div>
+                  <div className="font-medium">{(t as any).barber?.name}</div>
+                  <div className="text-xs text-muted-foreground">{t.start_date} → {t.end_date} · {t.reason}</div>
+                </div>
+                <Button size="icon" variant="ghost" onClick={() => removeTimeOff.mutate(t.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
-              <p className="text-sm text-muted-foreground">{u.start} → {u.end}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+          <Label className="hidden">_</Label>
         </CardContent>
       </Card>
     </div>
