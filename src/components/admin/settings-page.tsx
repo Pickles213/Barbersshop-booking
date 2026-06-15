@@ -1,185 +1,107 @@
-import { useState } from "react";
-import { CalendarDays, CreditCard, Plus, Store, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Save, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { DashboardHeader } from "./dashboard-header";
-import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function SettingsPage() {
-  const [hours, setHours] = useState(
-    days.map((d) => ({ day: d, open: "09:00", close: d === "Sunday" ? "17:00" : "20:00", closed: d === "Sunday" })),
-  );
-  const [methods, setMethods] = useState({ cash: true, gcash: true, paymaya: true, card: false });
-  const [holidays, setHolidays] = useState([
-    { id: "h1", name: "Independence Day", date: "2026-06-12" },
-    { id: "h2", name: "Ninoy Aquino Day", date: "2026-08-21" },
-    { id: "h3", name: "Christmas Day", date: "2026-12-25" },
-  ]);
+  const qc = useQueryClient();
+  const { data: settings } = useQuery({
+    queryKey: ["shop_settings"],
+    queryFn: async () => (await supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle()).data,
+  });
+  const [s, setS] = useState<any>(null);
+  useEffect(() => { if (settings) setS(settings); }, [settings]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("shop_settings").update(s).eq("id", 1);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["shop_settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const { data: holidays = [] } = useQuery({
+    queryKey: ["holidays"],
+    queryFn: async () => (await supabase.from("holidays").select("*").order("holiday_date")).data ?? [],
+  });
+  const [hName, setHName] = useState(""); const [hDate, setHDate] = useState("");
+  const addHoliday = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("holidays").insert({ name: hName, holiday_date: hDate });
+      if (error) throw error;
+    },
+    onSuccess: () => { setHName(""); setHDate(""); qc.invalidateQueries({ queryKey: ["holidays"] }); toast.success("Holiday added"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeHoliday = useMutation({
+    mutationFn: async (id: string) => { await supabase.from("holidays").delete().eq("id", id); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["holidays"] }),
+  });
+
+  if (!s) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   return (
     <div className="space-y-6">
-      <DashboardHeader title="Settings" subtitle="Shop preferences and configuration" showActions={false} />
+      <DashboardHeader
+        title="Settings"
+        subtitle="Shop information, hours and payment methods"
+        actions={<Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}><Save className="mr-2 h-4 w-4" />Save</Button>}
+      />
 
-      <Tabs defaultValue="shop">
-        <TabsList>
-          <TabsTrigger value="shop"><Store className="mr-2 h-4 w-4" />Shop</TabsTrigger>
-          <TabsTrigger value="hours"><CalendarDays className="mr-2 h-4 w-4" />Hours</TabsTrigger>
-          <TabsTrigger value="payments"><CreditCard className="mr-2 h-4 w-4" />Payments</TabsTrigger>
-          <TabsTrigger value="holidays">Holidays</TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader><CardTitle>Shop info</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="space-y-1.5"><Label>Shop name</Label><Input value={s.shop_name ?? ""} onChange={(e) => setS({ ...s, shop_name: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Email</Label><Input value={s.shop_email ?? ""} onChange={(e) => setS({ ...s, shop_email: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Phone</Label><Input value={s.shop_phone ?? ""} onChange={(e) => setS({ ...s, shop_phone: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Address</Label><Input value={s.shop_address ?? ""} onChange={(e) => setS({ ...s, shop_address: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Opening time</Label><Input type="time" value={s.open_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, open_time: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Closing time</Label><Input type="time" value={s.close_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, close_time: e.target.value })} /></div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="shop" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Shop Information</CardTitle>
-              <CardDescription>Public details shown to customers</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Shop name</Label>
-                  <Input id="name" defaultValue="Sharp & Co. Barbershop" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Contact number</Label>
-                  <Input id="phone" defaultValue="+63 917 555 0142" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue="hello@sharpandco.ph" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" defaultValue="2F Ayala Center, Makati City" />
-                </div>
+      <Card>
+        <CardHeader><CardTitle>Payment methods</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[["payment_cash","Cash"],["payment_gcash","GCash"],["payment_maya","Maya"],["payment_card","Card"]].map(([k,label]) => (
+            <div key={k} className="flex items-center gap-2 rounded border p-3">
+              <Switch checked={!!s[k]} onCheckedChange={(v) => setS({ ...s, [k]: v })} />
+              <Label>{label}</Label>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Holidays</CardTitle>
+          <CardDescription>Days the shop is closed</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <Input placeholder="Holiday name" value={hName} onChange={(e) => setHName(e.target.value)} />
+            <Input type="date" value={hDate} onChange={(e) => setHDate(e.target.value)} />
+            <Button onClick={() => addHoliday.mutate()} disabled={!hName || !hDate}><Plus className="mr-2 h-4 w-4" />Add</Button>
+          </div>
+          <div className="space-y-2">
+            {holidays.map((h) => (
+              <div key={h.id} className="flex items-center justify-between rounded border p-2 text-sm">
+                <span>{h.holiday_date} · {h.name}</span>
+                <Button size="icon" variant="ghost" onClick={() => removeHoliday.mutate(h.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="about">About</Label>
-                <Textarea id="about" rows={3} defaultValue="A modern barbershop blending classic craft with a relaxed lounge atmosphere." />
-              </div>
-              <Button>Save changes</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="hours" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Operating Hours</CardTitle>
-              <CardDescription>Default weekly schedule for the shop</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {hours.map((h, i) => (
-                <div key={h.day} className="grid grid-cols-[100px_1fr_1fr_auto] items-center gap-3 rounded-lg border p-3">
-                  <span className="font-medium">{h.day}</span>
-                  <Input
-                    type="time"
-                    value={h.open}
-                    disabled={h.closed}
-                    onChange={(e) =>
-                      setHours((p) => p.map((x, idx) => (idx === i ? { ...x, open: e.target.value } : x)))
-                    }
-                  />
-                  <Input
-                    type="time"
-                    value={h.close}
-                    disabled={h.closed}
-                    onChange={(e) =>
-                      setHours((p) => p.map((x, idx) => (idx === i ? { ...x, close: e.target.value } : x)))
-                    }
-                  />
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={!h.closed}
-                      onCheckedChange={(v) =>
-                        setHours((p) => p.map((x, idx) => (idx === i ? { ...x, closed: !v } : x)))
-                      }
-                    />
-                    <span className="text-xs text-muted-foreground">{h.closed ? "Closed" : "Open"}</span>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payments" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Enable how customers can pay</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(methods).map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between rounded-lg border p-4">
-                  <div>
-                    <p className="font-medium capitalize">{k}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {k === "cash" && "Pay in store with cash"}
-                      {k === "gcash" && "Mobile wallet via GCash"}
-                      {k === "paymaya" && "Mobile wallet via Maya"}
-                      {k === "card" && "Credit and debit cards"}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={v}
-                    onCheckedChange={(checked) =>
-                      setMethods((p) => ({ ...p, [k]: checked }))
-                    }
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="holidays" className="mt-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle>Holidays</CardTitle>
-                <CardDescription>Days when the shop is closed</CardDescription>
-              </div>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" />Add holiday</Button>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {holidays.map((h) => (
-                <div key={h.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <p className="font-medium">{h.name}</p>
-                    <p className="text-xs text-muted-foreground">{h.date}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Closed</Badge>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={() => setHolidays((p) => p.filter((x) => x.id !== h.id))}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
