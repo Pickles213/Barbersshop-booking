@@ -88,13 +88,13 @@ export async function createBooking(payload: {
 }) {
   const { data, error } = await supabase.rpc("public_booking_create", {
     p_service_id: payload.service_id,
-    p_barber_id: payload.barber_id,
+    p_barber_id: payload.barber_id as unknown as string,
     p_booking_date: payload.booking_date,
     p_start_time: payload.start_time,
     p_customer_name: payload.customer_name,
     p_customer_phone: payload.customer_phone,
     p_customer_email: payload.customer_email ?? "",
-    p_notes: payload.notes ?? null,
+    p_notes: (payload.notes ?? undefined) as string | undefined,
   });
   if (error) throw error;
   return data as {
