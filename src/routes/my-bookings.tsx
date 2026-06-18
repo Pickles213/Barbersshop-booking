@@ -94,8 +94,8 @@ function MyBookingsPage() {
           </Card>
         )}
         {(bookings.data ?? []).map((b) => {
-          const svc = serviceMap.get(b.service_id);
-          const brb = barberMap.get(b.barber_id);
+          const svc = b.service_id ? serviceMap.get(b.service_id) : undefined;
+          const brb = b.barber_id ? barberMap.get(b.barber_id) : undefined;
           const upcoming = new Date(`${b.booking_date}T${b.start_time}`) > new Date();
           return (
             <Card key={b.id}>
