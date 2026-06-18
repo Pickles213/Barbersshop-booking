@@ -22,8 +22,15 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/admin/dashboard" });
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const { data: role } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      navigate({ to: role ? "/admin/dashboard" : "/my-bookings" });
     });
   }, [navigate]);
 
@@ -34,7 +41,14 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Welcome back!");
-    navigate({ to: "/admin/dashboard" });
+    const { data: u } = await supabase.auth.getUser();
+    const { data: role } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", u.user!.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    navigate({ to: role ? "/admin/dashboard" : "/my-bookings" });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -48,7 +62,7 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Account created — signing you in…");
-    navigate({ to: "/admin/dashboard" });
+    navigate({ to: "/my-bookings" });
   };
 
   return (
