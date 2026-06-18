@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as BarbersRouteImport } from './routes/barbers'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -27,6 +28,11 @@ import { Route as AdminBarbersRouteImport } from './routes/admin/barbers'
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BarbersRoute = BarbersRouteImport.update({
+  id: '/barbers',
+  path: '/barbers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/barbers': typeof BarbersRoute
   '/services': typeof ServicesRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/barbers': typeof BarbersRoute
   '/services': typeof ServicesRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/barbers': typeof BarbersRoute
   '/services': typeof ServicesRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/barbers'
     | '/services'
     | '/admin/barbers'
     | '/admin/bookings'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/barbers'
     | '/services'
     | '/admin/barbers'
     | '/admin/bookings'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/barbers'
     | '/services'
     | '/admin/barbers'
     | '/admin/bookings'
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BarbersRoute: typeof BarbersRoute
   ServicesRoute: typeof ServicesRoute
 }
 
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/barbers': {
+      id: '/barbers'
+      path: '/barbers'
+      fullPath: '/barbers'
+      preLoaderRoute: typeof BarbersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -337,6 +357,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BarbersRoute: BarbersRoute,
   ServicesRoute: ServicesRoute,
 }
 export const routeTree = rootRouteImport
