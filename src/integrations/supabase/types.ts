@@ -97,6 +97,7 @@ export type Database = {
           service_id: string | null
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
+          user_id: string | null
         }
         Insert: {
           barber_id?: string | null
@@ -112,6 +113,7 @@ export type Database = {
           service_id?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
+          user_id?: string | null
         }
         Update: {
           barber_id?: string | null
@@ -127,6 +129,7 @@ export type Database = {
           service_id?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -418,12 +421,54 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_available_slots: {
+        Args: {
+          p_barber_id: string
+          p_date: string
+          p_duration_minutes: number
+        }
+        Returns: string[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      public_booking_create: {
+        Args: {
+          p_barber_id: string
+          p_booking_date: string
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_notes?: string
+          p_service_id: string
+          p_start_time: string
+        }
+        Returns: {
+          barber_id: string | null
+          booking_date: string
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          notes: string | null
+          price: number
+          reference: string
+          service_id: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["booking_status"]
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
