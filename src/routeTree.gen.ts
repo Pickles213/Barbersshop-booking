@@ -27,6 +27,7 @@ import { Route as AdminNotificationsRouteImport } from './routes/admin/notificat
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
 import { Route as AdminBarbersRouteImport } from './routes/admin/barbers'
+import { Route as AdminAuditLogsRouteImport } from './routes/admin/audit-logs'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -118,6 +119,11 @@ const AdminBarbersRoute = AdminBarbersRouteImport.update({
   path: '/barbers',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/my-bookings': typeof MyBookingsRoute
   '/services': typeof ServicesRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/my-bookings': typeof MyBookingsRoute
   '/services': typeof ServicesRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/my-bookings': typeof MyBookingsRoute
   '/services': typeof ServicesRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/my-bookings'
     | '/services'
+    | '/admin/audit-logs'
     | '/admin/barbers'
     | '/admin/bookings'
     | '/admin/dashboard'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/my-bookings'
     | '/services'
+    | '/admin/audit-logs'
     | '/admin/barbers'
     | '/admin/bookings'
     | '/admin/dashboard'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/my-bookings'
     | '/services'
+    | '/admin/audit-logs'
     | '/admin/barbers'
     | '/admin/bookings'
     | '/admin/dashboard'
@@ -380,10 +392,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBarbersRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/audit-logs': {
+      id: '/admin/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/admin/audit-logs'
+      preLoaderRoute: typeof AdminAuditLogsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
 interface AdminRouteRouteChildren {
+  AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminBarbersRoute: typeof AdminBarbersRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
@@ -397,6 +417,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminBarbersRoute: AdminBarbersRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
@@ -426,3 +447,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
