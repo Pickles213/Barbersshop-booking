@@ -12,6 +12,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  ScrollText,
 } from "lucide-react";
 
 import {
@@ -36,6 +37,7 @@ const items = [
   { title: "Walk-ins", url: "/admin/walk-ins", icon: Footprints },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
+  { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
