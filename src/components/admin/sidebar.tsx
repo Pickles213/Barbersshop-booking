@@ -61,7 +61,7 @@ export function AdminSidebar() {
             <Scissors className="h-5 w-5" />
           </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-semibold">Sharp & Co.</p>
+            <p className="truncate text-sm font-semibold">Southside Barbers</p>
             <p className="truncate text-xs text-muted-foreground">Admin Console</p>
           </div>
         </div>

@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard · Sharp & Co." },
+      { title: "Admin Dashboard · Southside Barbers" },
       { name: "description", content: "Overview of bookings, revenue and barber performance." },
     ],
   }),
@@ -22,7 +22,7 @@ function DashboardPage() {
   const { data: bookings = [] } = useQuery({
     queryKey: ["dashboard-bookings"],
     queryFn: async () =>
-      (await supabase.from("bookings").select("*, barber:barbers(name), service:services(name)").order("booking_date", { ascending: false }).order("start_time")).data ?? [],
+      (await supabase.from("bookings").select("*, barber:barbers(name), service:services(name)").order("booking_date", { ascending: false }).order("start_time", { ascending: true })).data ?? [],
   });
   const { data: walkins = [] } = useQuery({
     queryKey: ["dashboard-walkins"],
@@ -72,7 +72,7 @@ function DashboardPage() {
                     <TableCell>{b.service?.name ?? "—"}</TableCell>
                     <TableCell>{b.barber?.name ?? "—"}</TableCell>
                     <TableCell>{b.booking_date}</TableCell>
-                    <TableCell>{b.start_time.slice(0, 5)}</TableCell>
+                    <TableCell>{b.start_time?.slice(0, 5) ?? "—"}</TableCell>
                     <TableCell><BookingStatusBadge status={b.status} /></TableCell>
                     <TableCell>₱{Number(b.price).toLocaleString()}</TableCell>
                   </TableRow>

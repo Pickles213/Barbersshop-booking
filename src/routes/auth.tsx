@@ -42,10 +42,11 @@ function AuthPage() {
     if (error) return toast.error(error.message);
     toast.success("Welcome back!");
     const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
     const { data: role } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", u.user!.id)
+      .eq("user_id", u.user.id)
       .eq("role", "admin")
       .maybeSingle();
     navigate({ to: role ? "/admin/dashboard" : "/my-bookings" });
@@ -54,13 +55,18 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: window.location.origin },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+    // If email confirmation is required, session will be null
+    if (!signUpData.session) {
+      toast.success("Account created — check your email to confirm before signing in.");
+      return;
+    }
     toast.success("Account created — signing you in…");
     navigate({ to: "/my-bookings" });
   };
@@ -72,7 +78,7 @@ function AuthPage() {
           <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Scissors className="h-6 w-6" />
           </div>
-          <CardTitle>Sharp & Co. Admin</CardTitle>
+          <CardTitle>Southside Barbers Admin</CardTitle>
           <CardDescription>The first account created becomes the admin.</CardDescription>
         </CardHeader>
         <CardContent>

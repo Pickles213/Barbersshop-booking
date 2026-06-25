@@ -14,9 +14,9 @@ export const Route = createFileRoute("/barbers")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Our Barbers — Sharp & Co." },
+      { title: "Our Barbers — Southside Barbers" },
       { name: "description", content: "Meet our master barbers. Browse specialties, experience and portfolio work." },
-      { property: "og:title", content: "Our Barbers — Sharp & Co." },
+      { property: "og:title", content: "Our Barbers — Southside Barbers" },
       { property: "og:description", content: "Meet our master barbers. Browse specialties, experience and portfolio work." },
     ],
   }),

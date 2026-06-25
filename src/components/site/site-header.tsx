@@ -45,7 +45,7 @@ export function SiteHeader() {
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Scissors className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight">Sharp &amp; Co.</span>
+          <span className="text-lg font-bold tracking-tight">Southside Barbers</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">

@@ -10,7 +10,7 @@ export function SiteFooter() {
             <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
               <Scissors className="h-4 w-4" />
             </div>
-            <span className="font-bold tracking-tight">Sharp &amp; Co.</span>
+            <span className="font-bold tracking-tight">Southside Barbers</span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
             Classic cuts and modern style. Booked in seconds.
@@ -34,7 +34,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Sharp &amp; Co. All rights reserved.
+        © {new Date().getFullYear()} Southside Barbers. All rights reserved.
       </div>
     </footer>
   );

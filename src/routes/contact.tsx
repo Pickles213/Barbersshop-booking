@@ -12,9 +12,9 @@ export const Route = createFileRoute("/contact")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Visit & Contact — Sharp & Co." },
-      { name: "description", content: "Shop hours, address, phone, and accepted payment methods at Sharp & Co." },
-      { property: "og:title", content: "Visit & Contact — Sharp & Co." },
+      { title: "Visit & Contact — Southside Barbers" },
+      { name: "description", content: "Shop hours, address, phone, and accepted payment methods at Southside Barbers." },
+      { property: "og:title", content: "Visit & Contact — Southside Barbers" },
       { property: "og:description", content: "Shop hours, address, phone, and accepted payment methods." },
     ],
   }),

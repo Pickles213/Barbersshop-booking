@@ -17,7 +17,7 @@ export const Route = createFileRoute("/my-bookings")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "My Bookings — Sharp & Co." },
+      { title: "My Bookings — Southside Barbers" },
       { name: "description", content: "View and manage your upcoming appointments." },
     ],
   }),

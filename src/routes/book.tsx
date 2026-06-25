@@ -36,9 +36,9 @@ export const Route = createFileRoute("/book")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Book an Appointment — Sharp & Co." },
+      { title: "Book an Appointment — Southside Barbers" },
       { name: "description", content: "Pick a service, choose your barber, and lock in a time. Guest checkout supported." },
-      { property: "og:title", content: "Book an Appointment — Sharp & Co." },
+      { property: "og:title", content: "Book an Appointment — Southside Barbers" },
       { property: "og:description", content: "Pick a service, choose your barber, and lock in a time." },
     ],
   }),

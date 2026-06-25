@@ -12,9 +12,9 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sharp & Co. — Premium Barber Shop" },
+      { title: "Southside Barbers — Premium Barber Shop" },
       { name: "description", content: "Classic cuts, hot-towel shaves and modern styling. Book your appointment online in seconds." },
-      { property: "og:title", content: "Sharp & Co. — Premium Barber Shop" },
+      { property: "og:title", content: "Southside Barbers — Premium Barber Shop" },
       { property: "og:description", content: "Classic cuts, hot-towel shaves and modern styling. Book online in seconds." },
     ],
   }),
