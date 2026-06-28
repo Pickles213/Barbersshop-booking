@@ -40,7 +40,7 @@ function ContactPage() {
         <Card>
           <CardContent className="space-y-5 p-6">
             <Info icon={MapPin} label="Address" value={data?.shop_address} />
-            <Info icon={Phone} label="Phone" value={data?.shop_phone} />
+            <Info icon={Phone} label="Phone" value={"09676767676"} />
             <Info icon={Mail} label="Email" value={data?.shop_email} />
             <Info
               icon={Clock}
