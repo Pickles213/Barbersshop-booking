@@ -14,13 +14,21 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function WalkInsPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [serviceId, setServiceId] = useState<string>("");
-  const [wait, setWait] = useState("15");
+  const [linkedCustomer, setLinkedCustomer] = useState<{
+    name: string; phone: string | null; email: string | null; user_id: string | null;
+  } | null>(null);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
 
   const { data: walkins = [], isLoading } = useQuery({
     queryKey: ["walk_ins"],
@@ -52,21 +60,45 @@ export function WalkInsPage() {
     },
   });
 
+  const { data: existingCustomers = [] } = useQuery({
+    queryKey: ["existing_customers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("customer_name, customer_phone, customer_email, user_id")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const seen = new Map<string, { name: string; phone: string | null; email: string | null; user_id: string | null }>();
+      for (const r of data ?? []) {
+        const key = (r.user_id ?? r.customer_email ?? r.customer_phone ?? r.customer_name ?? "").toString().toLowerCase();
+        if (!key || seen.has(key)) continue;
+        seen.set(key, {
+          name: r.customer_name,
+          phone: r.customer_phone,
+          email: r.customer_email,
+          user_id: r.user_id,
+        });
+      }
+      return Array.from(seen.values());
+    },
+  });
+
   const addWalkin = useMutation({
     mutationFn: async () => {
       if (!name.trim()) throw new Error("Name is required");
       const { error } = await supabase.from("walk_ins").insert({
         customer_name: name.trim(),
-        customer_phone: phone.trim() || null,
+        customer_phone: linkedCustomer?.phone ?? null,
         service_id: serviceId || null,
-        estimated_wait_minutes: parseInt(wait) || 15,
+        estimated_wait_minutes: 15,
         status: "waiting",
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Walk-in added");
-      setName(""); setPhone(""); setServiceId(""); setWait("15");
+      setName(""); setServiceId(""); setLinkedCustomer(null);
       qc.invalidateQueries({ queryKey: ["walk_ins"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -107,15 +139,68 @@ export function WalkInsPage() {
         <CardContent>
           <form
             onSubmit={(e) => { e.preventDefault(); addWalkin.mutate(); }}
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
           >
             <div className="space-y-1.5">
               <Label htmlFor="wi-name">Customer name *</Label>
               <Input id="wi-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wi-phone">Phone</Label>
-              <Input id="wi-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+63 …" />
+              <Label>Link existing customer (optional)</Label>
+              <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="truncate">
+                      {linkedCustomer ? linkedCustomer.name : "Search customer…"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search by name, phone, email…" />
+                    <CommandList>
+                      <CommandEmpty>No matching customer.</CommandEmpty>
+                      <CommandGroup>
+                        {linkedCustomer && (
+                          <CommandItem
+                            value="__clear__"
+                            onSelect={() => { setLinkedCustomer(null); setCustomerPickerOpen(false); }}
+                          >
+                            Clear selection (treat as guest)
+                          </CommandItem>
+                        )}
+                        {existingCustomers.map((c, i) => {
+                          const key = `${c.user_id ?? c.email ?? c.phone ?? c.name}-${i}`;
+                          const searchValue = [c.name, c.email, c.phone].filter(Boolean).join(" ");
+                          return (
+                            <CommandItem
+                              key={key}
+                              value={searchValue}
+                              onSelect={() => {
+                                setLinkedCustomer(c);
+                                setName(c.name);
+                                setCustomerPickerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", linkedCustomer?.name === c.name && linkedCustomer?.email === c.email ? "opacity-100" : "opacity-0")} />
+                              <div className="flex flex-col">
+                                <span className="text-sm">{c.name}</span>
+                                <span className="text-xs text-muted-foreground">{c.email ?? c.phone ?? "—"}</span>
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-1.5">
               <Label>Service</Label>
@@ -127,10 +212,6 @@ export function WalkInsPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="wi-wait">Est. wait (min)</Label>
-              <Input id="wi-wait" type="number" min={0} value={wait} onChange={(e) => setWait(e.target.value)} />
             </div>
             <div className="flex items-end">
               <Button type="submit" className="w-full" disabled={addWalkin.isPending}>
