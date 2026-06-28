@@ -8,6 +8,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { SiteLayout } from "@/components/site/site-layout";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,7 +110,7 @@ function MyBookingsPage() {
                   <p className="text-sm text-muted-foreground">with {brb?.name ?? "—"}</p>
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{format(new Date(b.booking_date), "PPP")}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{String(b.start_time).slice(0,5)}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatTime(String(b.start_time).slice(0,5))}</span>
                     <span>Ref: <span className="font-mono">{b.reference}</span></span>
                   </div>
                 </div>
@@ -134,4 +135,4 @@ function statusVariant(s: string): "default" | "secondary" | "destructive" | "ou
   if (s === "confirmed" || s === "completed") return "default";
   if (s === "cancelled" || s === "no_show") return "destructive";
   return "secondary";
-}
+} 

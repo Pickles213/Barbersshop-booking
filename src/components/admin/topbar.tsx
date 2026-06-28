@@ -2,6 +2,7 @@ import { Bell, Moon, Search, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { formatTime } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,7 @@ function toNotif(row: AuditRow): Notif | null {
     return {
       id: row.id,
       title: "New booking",
-      message: `${name} booked on ${date} at ${time}`,
+      message: `${name} booked on ${date} at ${formatTime(time)}`,
       created_at: row.created_at,
     };
   }

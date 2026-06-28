@@ -7,6 +7,7 @@ import { SiteLayout } from "@/components/site/site-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { fetchShopSettings } from "@/lib/customer-api";
+import { formatTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/contact")({
   ssr: false,
@@ -46,7 +47,7 @@ function ContactPage() {
               label="Hours"
               value={
                 data?.open_time && data?.close_time
-                  ? `${data.open_time.slice(0,5)} – ${data.close_time.slice(0,5)} daily`
+                  ? `${formatTime(data.open_time.slice(0,5))} – ${formatTime(data.close_time.slice(0,5))} daily`
                   : undefined
               }
             />
