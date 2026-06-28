@@ -85,7 +85,11 @@ export function SiteHeader() {
             </Button>
           )}
           <Button asChild size="sm">
-            <Link to="/book">Book now</Link>
+            {email ? (
+              <Link to="/book">Book now</Link>
+            ) : (
+              <Link to="/auth" search={{ redirect: "/book" }}>Book now</Link>
+            )}
           </Button>
         </div>
 
@@ -113,7 +117,11 @@ export function SiteHeader() {
               )}
               <div className="mt-4 flex flex-col gap-2 px-1">
                 <Button asChild>
-                  <Link to="/book">Book now</Link>
+                  {email ? (
+                    <Link to="/book">Book now</Link>
+                  ) : (
+                    <Link to="/auth" search={{ redirect: "/book" }}>Book now</Link>
+                  )}
                 </Button>
                 {email ? (
                   <Button variant="outline" onClick={signOut}>Sign out</Button>
