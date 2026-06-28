@@ -75,16 +75,6 @@ function BookPage() {
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
 
-  if (checkingAuth) {
-    return (
-      <SiteLayout>
-        <div className="mx-auto max-w-3xl px-4 py-20 text-center text-sm text-muted-foreground">
-          Loading…
-        </div>
-      </SiteLayout>
-    );
-  }
-
   const service = useMemo(
     () => services.data?.find((s) => s.id === serviceId) ?? null,
     [services.data, serviceId],
@@ -138,6 +128,16 @@ function BookPage() {
     },
     onError: (err: Error) => toast.error(err.message ?? "Could not create booking"),
   });
+
+  if (checkingAuth) {
+    return (
+      <SiteLayout>
+        <div className="mx-auto max-w-3xl px-4 py-20 text-center text-sm text-muted-foreground">
+          Loading…
+        </div>
+      </SiteLayout>
+    );
+  }
 
   const submit = () => {
     if (!service || !dateStr || !slot) return;
