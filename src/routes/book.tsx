@@ -29,6 +29,7 @@ import {
 const searchSchema = z.object({
   service: z.string().optional(),
   barber: z.string().optional(),
+  redirect: z.string().optional(),
 });
 
 export const Route = createFileRoute("/book")({
@@ -51,6 +52,18 @@ function BookPage() {
   const { service: presetService, barber: presetBarber } = Route.useSearch();
   const navigate = useNavigate();
 
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        navigate({ to: "/auth", search: { redirect: "/book" } });
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+  }, [navigate]);
+
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [serviceId, setServiceId] = useState<string | null>(presetService ?? null);
   const [barberId, setBarberId] = useState<string | null>(presetBarber ?? null);
@@ -61,6 +74,16 @@ function BookPage() {
 
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
+
+  if (checkingAuth) {
+    return (
+      <SiteLayout>
+        <div className="mx-auto max-w-3xl px-4 py-20 text-center text-sm text-muted-foreground">
+          Loading…
+        </div>
+      </SiteLayout>
+    );
+  }
 
   const service = useMemo(
     () => services.data?.find((s) => s.id === serviceId) ?? null,
