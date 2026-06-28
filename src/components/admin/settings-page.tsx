@@ -1,0 +1,107 @@
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Save, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { DashboardHeader } from "./dashboard-header";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
+export function SettingsPage() {
+  const qc = useQueryClient();
+  const { data: settings } = useQuery({
+    queryKey: ["shop_settings"],
+    queryFn: async () => (await supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle()).data,
+  });
+  const [s, setS] = useState<any>(null);
+  useEffect(() => { if (settings) setS(settings); }, [settings]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("shop_settings").update(s).eq("id", 1);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["shop_settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const { data: holidays = [] } = useQuery({
+    queryKey: ["holidays"],
+    queryFn: async () => (await supabase.from("holidays").select("*").order("holiday_date")).data ?? [],
+  });
+  const [hName, setHName] = useState(""); const [hDate, setHDate] = useState("");
+  const addHoliday = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("holidays").insert({ name: hName, holiday_date: hDate });
+      if (error) throw error;
+    },
+    onSuccess: () => { setHName(""); setHDate(""); qc.invalidateQueries({ queryKey: ["holidays"] }); toast.success("Holiday added"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeHoliday = useMutation({
+    mutationFn: async (id: string) => { await supabase.from("holidays").delete().eq("id", id); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["holidays"] }),
+  });
+
+  if (!s) return <p className="text-sm text-muted-foreground">Loading…</p>;
+
+  return (
+    <div className="space-y-6">
+      <DashboardHeader
+        title="Settings"
+        subtitle="Shop information, hours and payment methods"
+        actions={<Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}><Save className="mr-2 h-4 w-4" />Save</Button>}
+      />
+
+      <Card>
+        <CardHeader><CardTitle>Shop info</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="space-y-1.5"><Label>Shop name</Label><Input value={s.shop_name ?? ""} onChange={(e) => setS({ ...s, shop_name: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Email</Label><Input value={s.shop_email ?? ""} onChange={(e) => setS({ ...s, shop_email: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Phone</Label><Input value={s.shop_phone ?? ""} onChange={(e) => setS({ ...s, shop_phone: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Address</Label><Input value={s.shop_address ?? ""} onChange={(e) => setS({ ...s, shop_address: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Opening time</Label><Input type="time" value={s.open_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, open_time: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Closing time</Label><Input type="time" value={s.close_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, close_time: e.target.value })} /></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Payment methods</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[["payment_cash","Cash"],["payment_gcash","GCash"],["payment_maya","Maya"],["payment_card","Card"]].map(([k,label]) => (
+            <div key={k} className="flex items-center gap-2 rounded border p-3">
+              <Switch checked={!!s[k]} onCheckedChange={(v) => setS({ ...s, [k]: v })} />
+              <Label>{label}</Label>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Holidays</CardTitle>
+          <CardDescription>Days the shop is closed</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <Input placeholder="Holiday name" value={hName} onChange={(e) => setHName(e.target.value)} />
+            <Input type="date" value={hDate} onChange={(e) => setHDate(e.target.value)} />
+            <Button onClick={() => addHoliday.mutate()} disabled={!hName || !hDate}><Plus className="mr-2 h-4 w-4" />Add</Button>
+          </div>
+          <div className="space-y-2">
+            {holidays.map((h) => (
+              <div key={h.id} className="flex items-center justify-between rounded border p-2 text-sm">
+                <span>{h.holiday_date} · {h.name}</span>
+                <Button size="icon" variant="ghost" onClick={() => removeHoliday.mutate(h.id)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
