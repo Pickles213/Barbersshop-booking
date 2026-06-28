@@ -9,7 +9,6 @@ import {
   CalendarClock,
   Footprints,
   BarChart3,
-  Bell,
   Settings,
   LogOut,
   ScrollText,
@@ -48,7 +47,6 @@ const groups = [
     label: "Insights",
     items: [
       { title: "Reports", url: "/admin/reports", icon: BarChart3 },
-      { title: "Notifications", url: "/admin/notifications", icon: Bell },
       { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
     ],
   },
