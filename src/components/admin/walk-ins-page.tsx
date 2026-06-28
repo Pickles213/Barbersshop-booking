@@ -64,20 +64,20 @@ export function WalkInsPage() {
     queryKey: ["existing_customers"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bookings")
-        .select("customer_name, customer_phone, customer_email, user_id")
-        .order("created_at", { ascending: false })
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .order("full_name", { ascending: true })
         .limit(500);
       if (error) throw error;
       const seen = new Map<string, { name: string; phone: string | null; email: string | null; user_id: string | null }>();
       for (const r of data ?? []) {
-        const key = (r.user_id ?? r.customer_email ?? r.customer_phone ?? r.customer_name ?? "").toString().toLowerCase();
+        const key = (r.id ?? r.email ?? r.phone ?? r.full_name ?? "").toString().toLowerCase();
         if (!key || seen.has(key)) continue;
         seen.set(key, {
-          name: r.customer_name,
-          phone: r.customer_phone,
-          email: r.customer_email,
-          user_id: r.user_id,
+          name: r.full_name ?? r.email ?? "Unnamed",
+          phone: r.phone,
+          email: r.email,
+          user_id: r.id,
         });
       }
       return Array.from(seen.values());
