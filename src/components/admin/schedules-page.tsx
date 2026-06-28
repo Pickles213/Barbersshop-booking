@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn, formatTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -29,8 +29,11 @@ function getInitials(name: string) {
 }
 
 function fmt12(time: string) {
-  // Delegates to shared formatTime utility
-  return formatTime(time);
+  if (!time) return "";
+  const [h, m] = time.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
 export function SchedulesPage() {
@@ -86,6 +89,7 @@ export function SchedulesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Summary stats
   const today = new Date().getDay();
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -151,15 +155,17 @@ export function SchedulesPage() {
           const onLeave = barbersOnLeaveToday.some((t) => (t as any).barber_id === b.id);
           const isEditing = editingBarber === b.id;
 
+          // Summarize shift times
           const workingRows = rows.filter((s) => s && !s.is_off);
           const uniqueTimes = [
-            ...new Set(workingRows.map((s) => `${formatTime(s!.start_time.slice(0, 5))}–${formatTime(s!.end_time.slice(0, 5))}`)),
+            ...new Set(workingRows.map((s) => `${s!.start_time.slice(0, 5)}–${s!.end_time.slice(0, 5)}`)),
           ];
 
           return (
             <Card key={b.id} className={cn("transition-all", onLeave && "border-amber-200 bg-amber-50/30")}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
+                  {/* Avatar */}
                   <div
                     className={cn(
                       "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
@@ -170,7 +176,9 @@ export function SchedulesPage() {
                     {getInitials(b.name)}
                   </div>
 
+                  {/* Main content */}
                   <div className="min-w-0 flex-1">
+                    {/* Name + status */}
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold">{b.name}</span>
                       {onLeave ? (
@@ -179,57 +187,73 @@ export function SchedulesPage() {
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="border-green-300 bg-green-100 text-green-700 text-xs">
-                          Active
+                          Working today
                         </Badge>
                       )}
-                      <span className="text-xs text-muted-foreground">{workingDays} working days/week</span>
                     </div>
 
-                    {!isEditing && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {DAYS.map((day, d) => {
-                          const s = rows[d];
-                          const working = s && !s.is_off;
-                          return (
-                            <div
-                              key={day}
-                              className={cn(
-                                "flex h-7 w-9 flex-col items-center justify-center rounded text-[10px] font-medium",
-                                working
-                                  ? "bg-primary/10 text-primary"
-                                  : "bg-muted text-muted-foreground"
-                              )}
-                            >
-                              {day}
-                            </div>
-                          );
-                        })}
+                    {/* Day chips — clickable to toggle when editing */}
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      {DAYS.map((day, i) => {
+                        const s = rows[i];
+                        const isOn = s && !s.is_off;
+                        return (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => {
+                              if (isEditing && s) {
+                                updateSched.mutate({ id: s.id, patch: { is_off: isOn } });
+                              }
+                            }}
+                            className={cn(
+                              "rounded-md px-2.5 py-1 text-xs font-medium border transition-colors",
+                              isOn
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : "bg-muted text-muted-foreground border-border",
+                              isEditing ? "cursor-pointer hover:opacity-70" : "cursor-default"
+                            )}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Summary line or edit inputs */}
+                    {!isEditing ? (
+                      <div className="flex flex-wrap gap-4">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5" />
+                          {uniqueTimes.length === 1
+                            ? (() => {
+                                const [start, end] = uniqueTimes[0].split("–");
+                                return `${fmt12(start)} – ${fmt12(end)} every working day`;
+                              })()
+                            : uniqueTimes.length > 1
+                            ? "Varied hours per day — click Edit to view"
+                            : "No schedule set"}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {workingDays} day{workingDays !== 1 ? "s" : ""}/week
+                        </div>
                       </div>
-                    )}
-
-                    {!isEditing && uniqueTimes.length > 0 && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {uniqueTimes.length === 1
-                          ? (() => {
-                              const [start, end] = uniqueTimes[0].split("–");
-                              return `${fmt12(start)} – ${fmt12(end)} every working day`;
-                            })()
-                          : uniqueTimes.join(" · ")}
-                      </p>
-                    )}
-
-                    {isEditing && (
-                      <div className="mt-2">
-                        <p className="mb-2 text-xs font-medium text-muted-foreground">Edit shift hours per day</p>
-                        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
-                          {DAYS.map((day, d) => {
-                            const s = rows[d];
-                            if (!s) return (
-                              <div key={day} className="space-y-1.5 rounded-lg border p-2 text-xs opacity-40">
-                                <p className="text-center font-medium">{day}</p>
-                                <p className="text-center text-muted-foreground">—</p>
-                              </div>
-                            );
+                    ) : (
+                      <div className="mt-2 overflow-x-auto pb-1">
+                        <div className="grid min-w-[600px] grid-cols-7 gap-1.5">
+                          {DAYS.map((day, i) => {
+                            const s = rows[i];
+                            if (!s)
+                              return (
+                                <div
+                                  key={day}
+                                  className="rounded-lg border bg-muted/40 p-2 text-center text-xs text-muted-foreground"
+                                >
+                                  {day}
+                                  <br />—
+                                </div>
+                              );
                             return (
                               <div
                                 key={day}
@@ -265,6 +289,7 @@ export function SchedulesPage() {
                     )}
                   </div>
 
+                  {/* Edit / Done button */}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -272,9 +297,13 @@ export function SchedulesPage() {
                     onClick={() => setEditingBarber(isEditing ? null : b.id)}
                   >
                     {isEditing ? (
-                      <><Check className="mr-1.5 h-3.5 w-3.5" /> Done</>
+                      <>
+                        <Check className="mr-1.5 h-3.5 w-3.5" /> Done
+                      </>
                     ) : (
-                      <><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</>
+                      <>
+                        <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
+                      </>
                     )}
                   </Button>
                 </div>
@@ -291,43 +320,78 @@ export function SchedulesPage() {
           <p className="text-xs text-muted-foreground">Record upcoming leaves for any barber.</p>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Add leave form */}
           <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Add a leave</p>
+            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Add a leave
+            </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Barber</Label>
-                <Select value={toForm.barber_id} onValueChange={(v) => setToForm({ ...toForm, barber_id: v })}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select barber" /></SelectTrigger>
+                <Select
+                  value={toForm.barber_id}
+                  onValueChange={(v) => setToForm({ ...toForm, barber_id: v })}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select barber" />
+                  </SelectTrigger>
                   <SelectContent>
                     {barbers.map((b) => (
-                      <SelectItem key={b.id} value={b.id} className="text-xs">{b.name}</SelectItem>
+                      <SelectItem key={b.id} value={b.id} className="text-xs">
+                        {b.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Start date</Label>
-                <Input type="date" className="h-8 text-xs" value={toForm.start_date} onChange={(e) => setToForm({ ...toForm, start_date: e.target.value })} />
+                <Input
+                  type="date"
+                  className="h-8 text-xs"
+                  value={toForm.start_date}
+                  onChange={(e) => setToForm({ ...toForm, start_date: e.target.value })}
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">End date</Label>
-                <Input type="date" className="h-8 text-xs" value={toForm.end_date} onChange={(e) => setToForm({ ...toForm, end_date: e.target.value })} />
+                <Input
+                  type="date"
+                  className="h-8 text-xs"
+                  value={toForm.end_date}
+                  onChange={(e) => setToForm({ ...toForm, end_date: e.target.value })}
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Reason</Label>
-                <Input className="h-8 text-xs" placeholder="e.g. Family, Sick, Vacation" value={toForm.reason} onChange={(e) => setToForm({ ...toForm, reason: e.target.value })} />
+                <Input
+                  className="h-8 text-xs"
+                  placeholder="e.g. Family, Sick, Vacation"
+                  value={toForm.reason}
+                  onChange={(e) => setToForm({ ...toForm, reason: e.target.value })}
+                />
               </div>
               <div className="flex items-end">
-                <Button size="sm" className="h-8 w-full text-xs" onClick={() => addTimeOff.mutate()}
-                  disabled={!toForm.barber_id || !toForm.start_date || !toForm.end_date || addTimeOff.isPending}>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Add leave
+                <Button
+                  size="sm"
+                  className="h-8 w-full text-xs"
+                  onClick={() => addTimeOff.mutate()}
+                  disabled={
+                    !toForm.barber_id || !toForm.start_date || !toForm.end_date || addTimeOff.isPending
+                  }
+                >
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Add leave
                 </Button>
               </div>
             </div>
           </div>
 
+          {/* Leave list */}
           {timeOff.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">No upcoming leaves recorded.</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              No upcoming leaves recorded.
+            </p>
           ) : (
             <div className="divide-y rounded-lg border overflow-hidden">
               {timeOff.map((t) => {
@@ -338,9 +402,16 @@ export function SchedulesPage() {
                 const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
                 const fmtDate = (d: Date) =>
                   d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+
                 return (
                   <div key={t.id} className="flex items-center gap-3 bg-card px-4 py-3">
-                    <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold", color.bg, color.text)}>
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-content:center rounded-full text-xs font-semibold items-center justify-center",
+                        color.bg,
+                        color.text
+                      )}
+                    >
                       {getInitials((t as any).barber?.name ?? "?")}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -350,9 +421,16 @@ export function SchedulesPage() {
                       </p>
                     </div>
                     {t.reason && (
-                      <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">{t.reason}</span>
+                      <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                        {t.reason}
+                      </span>
                     )}
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeTimeOff.mutate(t.id)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeTimeOff.mutate(t.id)}
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>

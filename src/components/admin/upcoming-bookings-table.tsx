@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,7 +15,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatPHP } from "@/lib/mock-data";
-import { formatTime } from "@/lib/utils";
 import type { UpcomingBookingRow } from "@/types/db";
 
 import { BookingStatusBadge } from "./booking-status-badge";
@@ -51,7 +56,7 @@ export function UpcomingBookingsTable({ rows }: Props) {
                   <TableCell className="font-medium">{r.client_name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.service_name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.barber_name}</TableCell>
-                  <TableCell className="whitespace-nowrap">{formatTime(r.start_time)}</TableCell>
+                  <TableCell className="whitespace-nowrap">{r.start_time}</TableCell>
                   <TableCell>
                     <BookingStatusBadge status={r.status} />
                   </TableCell>

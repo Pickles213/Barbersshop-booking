@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { DashboardHeader } from "./dashboard-header";
 import { BookingStatusBadge } from "./booking-status-badge";
 import { supabase } from "@/integrations/supabase/client";
-import { formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -237,7 +236,7 @@ export function BookingsPage() {
                   <TableCell>{b.service?.name ?? "—"}</TableCell>
                   <TableCell>{b.barber?.name ?? "—"}</TableCell>
                   <TableCell>{b.booking_date}</TableCell>
-                  <TableCell>{formatTime(b.start_time.slice(0, 5))}</TableCell>
+                  <TableCell>{b.start_time.slice(0, 5)}</TableCell>
                   <TableCell>
                     <Select value={b.status} onValueChange={(v) => updateStatus.mutate({ id: b.id, status: v as Status })}>
                       <SelectTrigger className="h-7 w-32 border-0 p-0 [&>svg]:hidden">

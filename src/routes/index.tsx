@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
-import { formatTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -54,7 +53,7 @@ function HomePage() {
             <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               {shop.data?.open_time && shop.data?.close_time && (
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> {formatTime(shop.data.open_time.slice(0,5))} – {formatTime(shop.data.close_time.slice(0,5))}
+                  <Clock className="h-4 w-4" /> {shop.data.open_time.slice(0,5)} – {shop.data.close_time.slice(0,5)}
                 </div>
               )}
               {shop.data?.shop_address && (
