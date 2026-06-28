@@ -1,64 +1,46 @@
-## Admin Audit Logs
+## Goal
+Wire the notifications bell in `src/components/admin/topbar.tsx` to the real `audit_logs` table, showing recent booking activity with an unread badge tracked in `localStorage`.
 
-Track every important change in the system so admins can review who did what, when, and what changed.
+## Schema note
+The user's spec references `table_name`, `action='INSERT'/'UPDATE'`, and `new_data`. The actual `audit_logs` schema in this project uses:
+- `entity_type` (instead of `table_name`) — value `'booking'`
+- `action` strings like `'booking.created'`, `'booking.status_changed'`, `'booking.updated'`
+- `after` jsonb (instead of `new_data`)
 
-### Database (one migration)
+The plan keeps the user's intent (new bookings + cancellations only) but maps it to the real columns. No schema or migration changes.
 
-New table `public.audit_logs`:
-- `actor_user_id` (uuid, nullable — null = guest/public action)
-- `actor_email` (text, snapshot at time of action)
-- `actor_role` (text — admin/staff/customer/guest)
-- `action` (text — e.g. `booking.created`, `booking.status_changed`, `service.updated`, `barber.deleted`, `schedule.updated`, `holiday.created`, `walk_in.completed`)
-- `entity_type` (text — `booking`, `service`, `barber`, `schedule`, `holiday`, `walk_in`, etc.)
-- `entity_id` (uuid, nullable)
-- `summary` (text — human-readable line, e.g. "Confirmed booking BK-AB12CD for John Doe")
-- `before` (jsonb, nullable — row snapshot before change)
-- `after` (jsonb, nullable — row snapshot after change)
-- `created_at` (timestamptz)
+## Implementation — only `src/components/admin/topbar.tsx`
 
-GRANTs: `service_role` ALL; `authenticated` SELECT (RLS restricts to admins).
-RLS: only `has_role(auth.uid(), 'admin')` can SELECT. Inserts go through a `SECURITY DEFINER` function `log_audit(...)` — no direct INSERT policy.
+1. Add a `useQuery` (`@tanstack/react-query`, already used elsewhere) that runs:
+   ```ts
+   supabase.from('audit_logs').select('*')
+     .eq('entity_type', 'booking')
+     .in('action', ['booking.created', 'booking.status_changed'])
+     .gte('created_at', new Date(Date.now() - 7*24*60*60*1000).toISOString())
+     .order('created_at', { ascending: false })
+     .limit(20)
+   ```
+   Refetch every 60s and on window focus.
 
-Retention: keep forever (no purge job).
+2. Map rows to notifications, dropping anything that doesn't match these two cases:
+   - `action === 'booking.created'` → `{ title: "New booking", message: "<customer_name> booked on <booking_date> at <start_time>" }`
+   - `action === 'booking.status_changed'` AND `after.status === 'cancelled'` → `{ title: "Booking cancelled", message: "<customer_name>'s booking on <booking_date> was cancelled" }`
+   - Otherwise: filter out.
+   `customer_name`, `booking_date`, `start_time` come from `row.after` (jsonb).
 
-### Automatic capture (DB triggers — can't be bypassed)
+3. `localStorage` key `seen_audit_ids`, stored as JSON `Array<{ id: string; ts: number }>`:
+   - On load: parse, drop entries older than 7 days, write back.
+   - Unread badge count = visible notifications whose `id` is not in the seen set.
+   - When dropdown opens (`onOpenChange(true)`): add every currently visible notification id (with `ts = Date.now()`) to the seen list and persist.
 
-`AFTER INSERT/UPDATE/DELETE` triggers writing to `audit_logs` via `log_audit()` on:
-- `bookings` — captures create, status change (pending→confirmed/cancelled/completed/no_show), reschedule, delete. Status changes get a dedicated `booking.status_changed` action with old→new in summary.
-- `walk_ins` — create, status change, delete.
-- `services` — create, update (price/duration/active), delete.
-- `barbers` — create, update, delete.
-- `schedules` — create, update, delete.
-- `holidays` — create, delete.
-- `time_off` — create, delete.
-- `shop_settings` — update.
+4. Replace the current bell `<Button>` with a shadcn `DropdownMenu` (already imported across project) containing:
+   - Header "Notifications"
+   - List of items: title (bold), message (muted), relative time from `created_at` (small/muted).
+   - Empty state: "No new notifications".
+   - Footer: `<Link to="/admin/audit-logs">View all</Link>` (TanStack Router `Link`).
+   - Red dot/count badge stays on the bell when unread > 0 (show number if ≤ 9, else "9+").
 
-Each trigger pulls actor from `auth.uid()` + joins `auth.users` for email + `has_role` for role. Public/guest booking inserts via `public_booking_create` log with `actor_role='guest'`.
+5. Relative time: small inline helper (`Math.floor((Date.now()-t)/...)` → "just now", "X minutes ago", "X hours ago", "X days ago"). No new dependency.
 
-### Admin UI
-
-New route `src/routes/admin/audit-logs.tsx` and `src/components/admin/audit-logs-page.tsx`:
-- Table: timestamp, actor (email + role badge), action (colored badge by category), entity (type + short id link), summary.
-- Filters: date range, action type (multi-select), entity type, actor email search.
-- Row click → side sheet showing full before/after JSON diff (highlighted changed fields), plus link to the entity's admin page when applicable.
-- Pagination (50 per page, server-side via `range()`).
-- "Export CSV" of current filter.
-
-Sidebar entry "Audit Logs" added under admin nav (admins only — hidden for staff via `useAdminAuth` role check).
-
-### Server access
-
-Single server fn `listAuditLogs` with `requireSupabaseAuth` + admin role check, supporting filters/pagination. Reads use RLS as the user (admin-only policy enforces access).
-
-### Out of scope
-
-- Editing/deleting log entries (immutable by design).
-- Auth/login event tracking (Supabase Auth already has its own log surface).
-- Email/Slack alerts on specific actions.
-
-### Verification
-
-- Migration applies; triggers fire on test insert/update/delete in each tracked table.
-- Audit page loads for admin, returns 403/redirect for staff.
-- Creating a booking from the customer site appears as `guest` actor; admin status change appears as `admin` actor with before/after diff.
-- Filters + CSV export return correct rows.
+## Out of scope
+No new files, no migrations, no schema changes, no edits to any other file.
