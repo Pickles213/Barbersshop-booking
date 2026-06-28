@@ -487,7 +487,41 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      time_off_admin: {
+        Row: {
+          barber_id: string | null
+          created_at: string | null
+          end_date: string | null
+          id: string | null
+          reason: string | null
+          start_date: string | null
+        }
+        Insert: {
+          barber_id?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string | null
+          reason?: string | null
+          start_date?: string | null
+        }
+        Update: {
+          barber_id?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string | null
+          reason?: string | null
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_off_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _audit_actor: {
