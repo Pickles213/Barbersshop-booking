@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Scissors } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: z.object({ redirect: z.string().optional() }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,6 +27,10 @@ function AuthPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
+      if (search.redirect) {
+        navigate({ to: search.redirect });
+        return;
+      }
       const { data: role } = await supabase
         .from("user_roles")
         .select("role")
@@ -32,7 +39,7 @@ function AuthPage() {
         .maybeSingle();
       navigate({ to: role ? "/admin/dashboard" : "/my-bookings" });
     });
-  }, [navigate]);
+  }, [navigate, search.redirect]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +50,10 @@ function AuthPage() {
     toast.success("Welcome back!");
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
+    if (search.redirect) {
+      navigate({ to: search.redirect });
+      return;
+    }
     const { data: role } = await supabase
       .from("user_roles")
       .select("role")
@@ -68,7 +79,7 @@ function AuthPage() {
       return;
     }
     toast.success("Account created — signing you in…");
-    navigate({ to: "/my-bookings" });
+    navigate({ to: search.redirect ?? "/my-bookings" });
   };
 
   return (
