@@ -29,6 +29,7 @@ import {
 const searchSchema = z.object({
   service: z.string().optional(),
   barber: z.string().optional(),
+  redirect: z.string().optional(),
 });
 
 export const Route = createFileRoute("/book")({
@@ -50,6 +51,18 @@ const ANY_BARBER = "__any__";
 function BookPage() {
   const { service: presetService, barber: presetBarber } = Route.useSearch();
   const navigate = useNavigate();
+
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        navigate({ to: "/auth", search: { redirect: "/book" } });
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+  }, [navigate]);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [serviceId, setServiceId] = useState<string | null>(presetService ?? null);
@@ -115,6 +128,16 @@ function BookPage() {
     },
     onError: (err: Error) => toast.error(err.message ?? "Could not create booking"),
   });
+
+  if (checkingAuth) {
+    return (
+      <SiteLayout>
+        <div className="mx-auto max-w-3xl px-4 py-20 text-center text-sm text-muted-foreground">
+          Loading…
+        </div>
+      </SiteLayout>
+    );
+  }
 
   const submit = () => {
     if (!service || !dateStr || !slot) return;
