@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { formatTime } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -38,9 +39,16 @@ export const Route = createFileRoute("/book")({
   head: () => ({
     meta: [
       { title: "Book an Appointment — Southside Barbers" },
-      { name: "description", content: "Pick a service, choose your barber, and lock in a time. Guest checkout supported." },
+      {
+        name: "description",
+        content:
+          "Pick a service, choose your barber, and lock in a time. Guest checkout supported.",
+      },
       { property: "og:title", content: "Book an Appointment — Southside Barbers" },
-      { property: "og:description", content: "Pick a service, choose your barber, and lock in a time." },
+      {
+        property: "og:description",
+        content: "Pick a service, choose your barber, and lock in a time.",
+      },
     ],
   }),
   component: BookPage,
@@ -70,7 +78,9 @@ function BookPage() {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [slot, setSlot] = useState<string | null>(null);
   const [details, setDetails] = useState({ name: "", phone: "", email: "", notes: "" });
-  const [confirmation, setConfirmation] = useState<{ reference: string; price: number } | null>(null);
+  const [confirmation, setConfirmation] = useState<{ reference: string; price: number } | null>(
+    null,
+  );
 
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
@@ -111,7 +121,9 @@ function BookPage() {
       }
       // ANY barber: union of all barber slots
       const all = await Promise.all(
-        (barbers.data ?? []).map((b) => fetchAvailableSlots(b.id, dateStr, service.duration_minutes)),
+        (barbers.data ?? []).map((b) =>
+          fetchAvailableSlots(b.id, dateStr, service.duration_minutes),
+        ),
       );
       const set = new Set<string>();
       all.flat().forEach((s) => set.add(s));
@@ -169,9 +181,19 @@ function BookPage() {
           <StepCard title="Choose a service">
             <div className="grid gap-3">
               {(services.data ?? []).map((s) => (
-                <ServiceRow key={s.id} s={s} selected={s.id === serviceId} onSelect={() => { setServiceId(s.id); setStep(2); }} />
+                <ServiceRow
+                  key={s.id}
+                  s={s}
+                  selected={s.id === serviceId}
+                  onSelect={() => {
+                    setServiceId(s.id);
+                    setStep(2);
+                  }}
+                />
               ))}
-              {services.isLoading && <p className="text-sm text-muted-foreground">Loading services…</p>}
+              {services.isLoading && (
+                <p className="text-sm text-muted-foreground">Loading services…</p>
+              )}
             </div>
           </StepCard>
         )}
@@ -182,28 +204,39 @@ function BookPage() {
               <BarberRow
                 any
                 selected={barberId === ANY_BARBER}
-                onSelect={() => { setBarberId(ANY_BARBER); setStep(3); }}
+                onSelect={() => {
+                  setBarberId(ANY_BARBER);
+                  setStep(3);
+                }}
               />
               {(barbers.data ?? []).map((b) => (
                 <BarberRow
                   key={b.id}
                   b={b}
                   selected={b.id === barberId}
-                  onSelect={() => { setBarberId(b.id); setStep(3); }}
+                  onSelect={() => {
+                    setBarberId(b.id);
+                    setStep(3);
+                  }}
                 />
               ))}
             </div>
           </StepCard>
         )}
 
-        {step === 3 && service && barberId && (
+        {step === 3 && service && (
           <StepCard title="Pick a date & time" onBack={() => setStep(2)}>
             <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <Label className="mb-2 block">Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start", !date && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !date && "text-muted-foreground",
+                      )}
+                    >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {date ? format(date, "PPP") : "Pick a date"}
                     </Button>
@@ -212,20 +245,27 @@ function BookPage() {
                     <Calendar
                       mode="single"
                       selected={date}
-                      onSelect={(d) => { setDate(d); setSlot(null); }}
-                      disabled={(d) => d < new Date(new Date().setHours(0,0,0,0))}
+                      onSelect={(d) => {
+                        setDate(d);
+                        setSlot(null);
+                      }}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
                       initialFocus
-                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
               <div>
-                <Label className="mb-2 block">Time</Label>
-                {!date && <p className="text-sm text-muted-foreground">Select a date to see slots.</p>}
-                {date && slots.isLoading && <p className="text-sm text-muted-foreground">Checking availability…</p>}
+                {!date && (
+                  <p className="text-sm text-muted-foreground">Select a date to see slots.</p>
+                )}
+                {date && slots.isLoading && (
+                  <p className="text-sm text-muted-foreground">Checking availability…</p>
+                )}
                 {date && !slots.isLoading && (slots.data?.length ?? 0) === 0 && (
-                  <p className="text-sm text-muted-foreground">No slots available — try another date.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No slots available — try another date.
+                  </p>
                 )}
                 <div className="grid grid-cols-3 gap-2">
                   {(slots.data ?? []).map((t) => (
@@ -236,7 +276,7 @@ function BookPage() {
                       variant={slot === t ? "default" : "outline"}
                       onClick={() => setSlot(t)}
                     >
-                      {t}
+                      {formatTime(t)}
                     </Button>
                   ))}
                 </div>
@@ -254,15 +294,38 @@ function BookPage() {
           <StepCard title="Your details" onBack={() => setStep(3)}>
             <Summary service={service} barber={barber} date={date} slot={slot} />
             <div className="mt-6 grid gap-4">
-              <Field label="Full name" value={details.name} onChange={(v) => setDetails({ ...details, name: v })} required />
+              <Field
+                label="Full name"
+                value={details.name}
+                onChange={(v) => setDetails({ ...details, name: v })}
+                required
+              />
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Phone" value={details.phone} onChange={(v) => setDetails({ ...details, phone: v })} required type="tel" />
-                <Field label="Email (optional)" value={details.email} onChange={(v) => setDetails({ ...details, email: v })} type="email" />
+                <Field
+                  label="Phone"
+                  value={details.phone}
+                  onChange={(v) => setDetails({ ...details, phone: v })}
+                  required
+                  type="tel"
+                />
+                <Field
+                  label="Email (optional)"
+                  value={details.email}
+                  onChange={(v) => setDetails({ ...details, email: v })}
+                  type="email"
+                />
               </div>
               <div>
-                <Label htmlFor="notes" className="mb-1.5 block">Notes (optional)</Label>
-                <Textarea id="notes" rows={3} value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })}
-                  placeholder="Anything we should know? (style, allergies, etc.)" />
+                <Label htmlFor="notes" className="mb-1.5 block">
+                  Notes (optional)
+                </Label>
+                <Textarea
+                  id="notes"
+                  rows={3}
+                  value={details.notes}
+                  onChange={(e) => setDetails({ ...details, notes: e.target.value })}
+                  placeholder="Anything we should know? (style, allergies, etc.)"
+                />
               </div>
             </div>
             <div className="mt-6 flex justify-end">
@@ -280,11 +343,15 @@ function BookPage() {
                 <Check className="h-7 w-7" />
               </div>
               <h2 className="text-2xl font-semibold">Booking confirmed!</h2>
-              <p className="text-muted-foreground">We'll see you soon. Save your reference number:</p>
+              <p className="text-muted-foreground">
+                We'll see you soon. Save your reference number:
+              </p>
               <p className="text-3xl font-bold tracking-tight">{confirmation.reference}</p>
               <Summary service={service} barber={barber} date={date} slot={slot} />
               <div className="flex flex-wrap justify-center gap-2 pt-2">
-                <Button asChild variant="outline"><Link to="/">Back home</Link></Button>
+                <Button asChild variant="outline">
+                  <Link to="/">Back home</Link>
+                </Button>
                 <Button onClick={() => navigate({ to: "/my-bookings" })}>View my bookings</Button>
               </div>
             </CardContent>
@@ -305,13 +372,21 @@ function Stepper({ step }: { step: number }) {
         const done = step > n;
         return (
           <div key={label} className="flex items-center gap-2">
-            <div className={cn(
-              "grid h-6 w-6 place-items-center rounded-full border text-[11px] font-semibold",
-              active && "border-primary bg-primary text-primary-foreground",
-              done && "border-primary bg-primary/10 text-primary",
-              !active && !done && "text-muted-foreground",
-            )}>{done ? <Check className="h-3 w-3" /> : n}</div>
-            <span className={cn("font-medium", active ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+            <div
+              className={cn(
+                "grid h-6 w-6 place-items-center rounded-full border text-[11px] font-semibold",
+                active && "border-primary bg-primary text-primary-foreground",
+                done && "border-primary bg-primary/10 text-primary",
+                !active && !done && "text-muted-foreground",
+              )}
+            >
+              {done ? <Check className="h-3 w-3" /> : n}
+            </div>
+            <span
+              className={cn("font-medium", active ? "text-foreground" : "text-muted-foreground")}
+            >
+              {label}
+            </span>
             {i < items.length - 1 && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
           </div>
         );
@@ -320,13 +395,25 @@ function Stepper({ step }: { step: number }) {
   );
 }
 
-function StepCard({ title, onBack, children }: { title: string; onBack?: () => void; children: React.ReactNode }) {
+function StepCard({
+  title,
+  onBack,
+  children,
+}: {
+  title: string;
+  onBack?: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <Card>
       <CardContent className="p-6 sm:p-8">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-semibold">{title}</h2>
-          {onBack && <Button variant="ghost" size="sm" onClick={onBack}>Back</Button>}
+          {onBack && (
+            <Button variant="ghost" size="sm" onClick={onBack}>
+              Back
+            </Button>
+          )}
         </div>
         {children}
       </CardContent>
@@ -334,7 +421,15 @@ function StepCard({ title, onBack, children }: { title: string; onBack?: () => v
   );
 }
 
-function ServiceRow({ s, selected, onSelect }: { s: Service; selected: boolean; onSelect: () => void }) {
+function ServiceRow({
+  s,
+  selected,
+  onSelect,
+}: {
+  s: Service;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
     <button
       type="button"
@@ -347,8 +442,15 @@ function ServiceRow({ s, selected, onSelect }: { s: Service; selected: boolean; 
       <div>
         <p className="font-medium">{s.name}</p>
         <p className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-          {s.category && <Badge variant="outline" className="text-[10px]">{s.category}</Badge>}
-          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{s.duration_minutes} min</span>
+          {s.category && (
+            <Badge variant="outline" className="text-[10px]">
+              {s.category}
+            </Badge>
+          )}
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {s.duration_minutes} min
+          </span>
         </p>
       </div>
       <span className="text-lg font-semibold">₱{Number(s.price).toFixed(0)}</span>
@@ -356,7 +458,17 @@ function ServiceRow({ s, selected, onSelect }: { s: Service; selected: boolean; 
   );
 }
 
-function BarberRow({ b, any, selected, onSelect }: { b?: Barber; any?: boolean; selected: boolean; onSelect: () => void }) {
+function BarberRow({
+  b,
+  any,
+  selected,
+  onSelect,
+}: {
+  b?: Barber;
+  any?: boolean;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
     <button
       type="button"
@@ -383,34 +495,80 @@ function BarberRow({ b, any, selected, onSelect }: { b?: Barber; any?: boolean; 
       </div>
       {!any && b?.rating != null && (
         <span className="flex items-center gap-1 text-sm">
-          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />{Number(b.rating).toFixed(1)}
+          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+          {Number(b.rating).toFixed(1)}
         </span>
       )}
     </button>
   );
 }
 
-function Summary({ service, barber, date, slot }: {
-  service: Service; barber: Barber | null; date?: Date; slot: string | null;
+function Summary({
+  service,
+  barber,
+  date,
+  slot,
+}: {
+  service: Service;
+  barber: Barber | null;
+  date?: Date;
+  slot: string | null;
 }) {
   return (
     <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-      <div className="flex justify-between"><span className="text-muted-foreground">Service</span><span className="font-medium">{service.name}</span></div>
-      <div className="mt-1.5 flex justify-between"><span className="text-muted-foreground">Barber</span><span className="font-medium">{barber?.name ?? "Any available"}</span></div>
-      {date && <div className="mt-1.5 flex justify-between"><span className="text-muted-foreground">Date</span><span className="font-medium">{format(date, "PPP")}</span></div>}
-      {slot && <div className="mt-1.5 flex justify-between"><span className="text-muted-foreground">Time</span><span className="font-medium">{slot}</span></div>}
-      <div className="mt-2 flex justify-between border-t pt-2"><span>Total</span><span className="font-bold">₱{Number(service.price).toFixed(0)}</span></div>
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">Service</span>
+        <span className="font-medium">{service.name}</span>
+      </div>
+      <div className="mt-1.5 flex justify-between">
+        <span className="text-muted-foreground">Barber</span>
+        <span className="font-medium">{barber?.name ?? "Any available"}</span>
+      </div>
+      {date && (
+        <div className="mt-1.5 flex justify-between">
+          <span className="text-muted-foreground">Date</span>
+          <span className="font-medium">{format(date, "PPP")}</span>
+        </div>
+      )}
+      {slot && (
+        <div className="mt-1.5 flex justify-between">
+          <span className="text-muted-foreground">Time</span>
+          <span className="font-medium">{formatTime(slot)}</span>
+        </div>
+      )}
+      <div className="mt-2 flex justify-between border-t pt-2">
+        <span>Total</span>
+        <span className="font-bold">₱{Number(service.price).toFixed(0)}</span>
+      </div>
     </div>
   );
 }
 
-function Field({ label, value, onChange, required, type = "text" }: {
-  label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string;
+function Field({
+  label,
+  value,
+  onChange,
+  required,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+  type?: string;
 }) {
   return (
     <div>
-      <Label className="mb-1.5 block">{label}{required && <span className="text-destructive"> *</span>}</Label>
-      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} />
+      <Label className="mb-1.5 block">
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </Label>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+      />
     </div>
   );
 }
