@@ -13,7 +13,13 @@ function createSupabaseClient() {
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
     console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    // Only throw on the client (browser). During SSR the VITE_ vars are not
+    // available in the server runtime, so we return null and let the Proxy
+    // lazily initialise on the first client-side access instead.
+    if (typeof window !== 'undefined') {
+      throw new Error(message);
+    }
+    return null as any;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
