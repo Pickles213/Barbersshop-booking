@@ -9,7 +9,7 @@ import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
 import { formatTime } from "@/lib/utils";
 
-// trigger rebuild
+// trigger
 
 export const Route = createFileRoute("/")({
   ssr: false,
