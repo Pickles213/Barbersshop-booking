@@ -54,7 +54,14 @@ function DashboardPage() {
 
   const todays = bookings.filter((b: any) => b.booking_date === today);
   const revenue = bookings.filter((b: any) => b.status === "completed").reduce((s, b: any) => s + Number(b.price), 0);
-  const upcoming = bookings.filter((b: any) => b.booking_date >= today).slice(0, 6);
+  const upcoming = bookings
+    .filter((b: any) => b.booking_date >= today)
+    .sort((a: any, b: any) => {
+      const dateCompare = a.booking_date.localeCompare(b.booking_date);
+      if (dateCompare !== 0) return dateCompare;
+      return (a.start_time ?? "").localeCompare(b.start_time ?? "");
+    })
+    .slice(0, 6);
   const recent = bookings.filter((b: any) => b.booking_date < today).slice(0, 6);
 
   const tables = [
