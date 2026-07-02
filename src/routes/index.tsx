@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
 import { cn, formatTime } from "@/lib/utils";
-
+// trigger build
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
@@ -18,8 +18,7 @@ export const Route = createFileRoute("/")({
       { title: "Southside Barbers — Premium Barber Shop" },
       {
         name: "description",
-        content:
-          "Classic cuts, hot-towel shaves and modern styling. Book your appointment online in seconds.",
+        content: "Classic cuts, hot-towel shaves and modern styling. Book your appointment online in seconds.",
       },
       { property: "og:title", content: "Southside Barbers — Premium Barber Shop" },
       {
@@ -44,26 +43,22 @@ const HERO_IMAGES = [
 function HomePage() {
   // ── Data queries (untouched) ──────────────────────────────────────────────
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
-  const barbers  = useQuery({ queryKey: ["barbers"],  queryFn: fetchBarbers  });
-  const shop     = useQuery({ queryKey: ["shop"],     queryFn: fetchShopSettings });
+  const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
+  const shop = useQuery({ queryKey: ["shop"], queryFn: fetchShopSettings });
 
   // ── Slideshow state (untouched) ───────────────────────────────────────────
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
-    const id = setTimeout(
-      () => setActiveSlide((prev) => (prev + 1) % HERO_IMAGES.length),
-      4000,
-    );
+    const id = setTimeout(() => setActiveSlide((prev) => (prev + 1) % HERO_IMAGES.length), 4000);
     return () => clearTimeout(id);
   }, [activeSlide]);
 
-  const featured   = (services.data ?? []).slice(0, 3);
-  const topBarbers = (barbers.data  ?? []).slice(0, 3);
+  const featured = (services.data ?? []).slice(0, 3);
+  const topBarbers = (barbers.data ?? []).slice(0, 3);
 
   return (
     <SiteLayout>
-
       {/* ════════════════════════════════════════════════════════════════════
           HERO — Industrial monochrome, z-stack fixed
           z-0  → slide images (always above section bg)
@@ -71,7 +66,6 @@ function HomePage() {
           z-20 → text, CTAs, nav arrows
           ════════════════════════════════════════════════════════════════════ */}
       <section className="relative w-full h-[85vh] bg-zinc-950 overflow-hidden flex items-center">
-
         {/* ── z-0 · Crossfade slide images ─────────────────────────────── */}
         <div className="absolute inset-0 z-0">
           {HERO_IMAGES.map((src, i) => (
@@ -98,7 +92,6 @@ function HomePage() {
 
         {/* ── z-20 · Text & CTAs ───────────────────────────────────────── */}
         <div className="relative z-20 flex flex-col justify-center h-full px-6 md:px-16 max-w-4xl text-white">
-
           {/* Eye-brow label */}
           <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
@@ -107,14 +100,13 @@ function HomePage() {
 
           {/* Main headline — crisp white, no tints */}
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-lg">
-            Look sharp.{" "}
-            <span className="text-white">Feel sharper.</span>
+            Look sharp. <span className="text-white">Feel sharper.</span>
           </h1>
 
           {/* Sub-copy — metallic silver/zinc */}
           <p className="mt-5 max-w-md text-base md:text-lg text-zinc-400 leading-relaxed font-light tracking-wide">
-            {shop.data?.shop_name ? `Welcome to ${shop.data.shop_name}.` : "Welcome."}{" "}
-            Master barbers, classic technique, modern style.
+            {shop.data?.shop_name ? `Welcome to ${shop.data.shop_name}.` : "Welcome."} Master barbers, classic
+            technique, modern style.
           </p>
 
           {/* CTAs */}
@@ -157,8 +149,7 @@ function HomePage() {
               {shop.data?.open_time && shop.data?.close_time && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-zinc-400" />
-                  {formatTime(shop.data.open_time.slice(0, 5))} –{" "}
-                  {formatTime(shop.data.close_time.slice(0, 5))}
+                  {formatTime(shop.data.open_time.slice(0, 5))} – {formatTime(shop.data.close_time.slice(0, 5))}
                 </div>
               )}
               {shop.data?.shop_address && (
@@ -179,9 +170,7 @@ function HomePage() {
                 aria-label={`Go to slide ${i + 1}`}
                 className={cn(
                   "rounded-full transition-all duration-300 ease-out",
-                  i === activeSlide
-                    ? "w-7 h-[3px] bg-white"
-                    : "w-3 h-[3px] bg-white/30 hover:bg-white/55",
+                  i === activeSlide ? "w-7 h-[3px] bg-white" : "w-3 h-[3px] bg-white/30 hover:bg-white/55",
                 )}
               />
             ))}
@@ -190,9 +179,7 @@ function HomePage() {
 
         {/* ── z-20 · Prev / Next arrow controls ────────────────────────── */}
         <button
-          onClick={() =>
-            setActiveSlide((prev) => (prev - 1 + HERO_IMAGES.length) % HERO_IMAGES.length)
-          }
+          onClick={() => setActiveSlide((prev) => (prev - 1 + HERO_IMAGES.length) % HERO_IMAGES.length)}
           className={cn(
             "absolute left-4 top-1/2 -translate-y-1/2 z-20",
             "flex h-10 w-10 items-center justify-center rounded-full",
@@ -243,9 +230,7 @@ function HomePage() {
                   </Badge>
                 )}
                 <h3 className="text-lg font-semibold">{s.name}</h3>
-                {s.description && (
-                  <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>
-                )}
+                {s.description && <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>}
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-2xl font-bold">₱{Number(s.price).toFixed(0)}</span>
                   <span className="text-sm text-muted-foreground">{s.duration_minutes} min</span>
@@ -303,9 +288,7 @@ function HomePage() {
                       </span>
                     )}
                   </div>
-                  {b.specialization && (
-                    <p className="mt-1 text-sm text-muted-foreground">{b.specialization}</p>
-                  )}
+                  {b.specialization && <p className="mt-1 text-sm text-muted-foreground">{b.specialization}</p>}
                 </CardContent>
               </Card>
             ))}
@@ -343,7 +326,6 @@ function HomePage() {
           </p>
         )}
       </section>
-
     </SiteLayout>
   );
 }
