@@ -17,7 +17,9 @@ function assertSupabaseEnv() {
   }
 }
 
-assertSupabaseEnv();
+if (typeof window !== "undefined") {
+  assertSupabaseEnv();
+}
 
 export const getRouter = () => {
   const queryClient = new QueryClient();
