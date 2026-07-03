@@ -141,6 +141,20 @@ function HomePage() {
             >
               <Link to="/services">View services</Link>
             </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className={cn(
+                "border border-white/40 bg-transparent text-white",
+                "hover:bg-white/10 hover:border-white/60",
+                "hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out",
+                "motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
+              )}
+            >
+              <Link to="/queue">Check the live queue</Link>
+            </Button>
           </div>
 
           {/* Shop meta — hours & address */}

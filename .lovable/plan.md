@@ -1,43 +1,50 @@
-## Queue Management Feature
+## Live Queue — reshape to "Now serving + your position + wait time"
 
-Build on the existing `walk_ins` table and admin walk-ins page, adding queue numbers, a public live queue display, Google Sign-In, and realtime updates.
+Most infrastructure is already in place (walk_ins queue_number, daily reset trigger, `queue_public` view, Google sign-in, admin email lookup, realtime). This plan refactors the public queue page to match the new spec and adds wait-time math based on service duration.
 
-### 1. Database (migration)
-- Add `queue_number int` and `served_at timestamptz` to `walk_ins`.
-- Add a per-day sequence: trigger on insert assigns the next `queue_number` scoped to `date(created_at)`.
-- Add narrow `TO anon` SELECT policy exposing only safe columns via a view `public.queue_public` (queue_number, customer_name first-name-only, status, created_at) so guests can watch the queue without seeing phones/emails.
-- Enable Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.walk_ins;`
-- Add RPC `lookup_customer_by_email(email)` (SECURITY DEFINER, returns id/name/phone) so attendants can find account holders without broad `profiles` read.
+### 1. Database (small migration)
 
-### 2. Auth
-- Enable Google via `configure_social_auth(["google"])`. Email/password stays for admins.
-- Sign-in button on landing + `/queue` page ("Sign in with Google to track your spot").
+- Ensure `queue_public` view exposes `service_id` (or `duration_minutes`) so anon can sum wait time without seeing PII. Add `duration_minutes` directly to the view via a join to `services`.
+- Add narrow policy allowing an authenticated user to SELECT their own `walk_ins` row (needed so signed-in users can see their queue_number / status without exposing others). If already present from prior turn, skip.
+- No new tables.
 
-### 3. Public live queue page — `/queue`
-- Lists today's queue in order: `#1 John — In progress`, `#2 Maria — Waiting`, ...
-- If signed in and user has an active queue entry (matched by `user_id` or email), highlight "You are #4 in line — about 45 min wait" at the top.
-- Realtime subscription refreshes on any walk_ins change.
-- Mobile-first, large numbers, auto-refresh badge.
+### 2. Public `/queue` page — rewrite
 
-### 4. Admin walk-ins upgrades (`src/components/admin/walk-ins-page.tsx`)
-- Add "Check in by email" mode: input email → calls `lookup_customer_by_email` → prefills name/phone/user_id, then adds to queue.
-- Keep existing guest add (name only).
-- Show `#queue_number` prominently on each queue card.
-- Add "Mark serving" (in_progress) and "Done" buttons already exist; ensure `served_at` is stamped on completion.
-- Subscribe to realtime so multiple attendants stay in sync.
+Remove the full waiting list. Show only:
 
-### 5. Navigation
-- Add "Live Queue" link in `src/components/site/site-header.tsx` → `/queue`.
-- Landing page CTA: "Check the live queue" alongside "Book now".
+- **Now serving**: big `#N` from the current `in_progress` row (or `—` if none).
+- **If signed in AND has an active ticket** (waiting/in_progress today):
+  - "You are Nth in line" (ordinal, based on count of waiting rows with lower queue_number, +1)
+  - "About X min wait" = sum of `duration_minutes` for all waiting rows ahead + remaining time of the in-progress row (fallback to service duration if unknown).
+  - If in_progress: "You're up now".
+- **If signed in with no ticket**: small note "You're not in today's queue — ask the attendant to check you in."
+- **If not signed in**: prominent "Sign in with Google to track your spot" button (uses existing `lovable.auth.signInWithOAuth("google")`).
+- Realtime subscription on `walk_ins` invalidates queries.
+- Mobile-first, giant numbers, live badge.
 
-### Technical notes
-- `walk_ins` already has `user_id`, `customer_name`, `customer_phone`, `status`. Extending it keeps admin queue and walk-in queue as one system.
-- Queue number resets daily via trigger using `SELECT COALESCE(MAX(queue_number),0)+1 FROM walk_ins WHERE created_at::date = now()::date`.
-- Realtime channel filters on today's date client-side.
-- Public view avoids exposing PII; only first name shown to anon.
+### 3. Admin walk-ins page
+
+Already has queue numbers, email lookup, realtime, and Done button. Small tweaks:
+- Ensure `served_at` is stamped when marking Done (add to the update patch; DB trigger `tg_stamp_served_at` may already do this — verify and rely on it).
+- No layout changes.
+
+### 4. Landing page
+
+Add secondary CTA "Check the live queue" → `/queue` next to "Book now" in `src/routes/index.tsx` hero.
+
+### 5. Header
+
+"Live queue" link already added — keep as is.
 
 ### Files
-- New migration (schema + view + RPC + realtime).
-- New: `src/routes/queue.tsx`, `src/components/queue/live-queue.tsx`.
-- Edit: `src/components/admin/walk-ins-page.tsx`, `src/components/site/site-header.tsx`, `src/routes/index.tsx`, `src/routes/auth.tsx` (Google button if not already).
-- Tool call: `supabase--configure_social_auth`.
+
+- New migration: update `queue_public` view to include `service_id` + `duration_minutes`; add self-select policy on `walk_ins` if missing.
+- Rewrite `src/routes/queue.tsx` to the "Now serving + personal" layout.
+- Small edit to `src/routes/index.tsx` for the CTA.
+- No changes to admin walk-ins page beyond confirming `served_at` behavior.
+
+### Technical notes
+
+- Position lookup for signed-in users: query `walk_ins` filtered by `user_id = auth.uid()`, today, status in (waiting, in_progress). Then read the public view for the ordered waiting list to compute "Nth" and wait sum locally.
+- Queue numbers never renumber (already the case — trigger only assigns on insert).
+- Wait math: `sum(duration_minutes of rows waiting with queue_number < mine) + (remaining time of in_progress row, estimated as its service duration)`.

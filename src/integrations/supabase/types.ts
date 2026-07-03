@@ -502,29 +502,23 @@ export type Database = {
       queue_public: {
         Row: {
           created_at: string | null
+          duration_minutes: number | null
           first_name: string | null
           id: string | null
           queue_number: number | null
           served_at: string | null
-          status: string | null
+          service_id: string | null
+          status: Database["public"]["Enums"]["walkin_status"] | null
         }
-        Insert: {
-          created_at?: string | null
-          first_name?: never
-          id?: string | null
-          queue_number?: number | null
-          served_at?: string | null
-          status?: never
-        }
-        Update: {
-          created_at?: string | null
-          first_name?: never
-          id?: string | null
-          queue_number?: number | null
-          served_at?: string | null
-          status?: never
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "walk_ins_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       time_off_admin: {
         Row: {
