@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, UserPlus, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Clock, UserPlus, CheckCircle2, XCircle, Loader2, Search, Radio } from "lucide-react";
 import { toast } from "sonner";
 
 import { DashboardHeader } from "./dashboard-header";
@@ -29,6 +29,8 @@ export function WalkInsPage() {
     name: string; phone: string | null; email: string | null; user_id: string | null;
   } | null>(null);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [emailLookup, setEmailLookup] = useState("");
+  const [lookingUp, setLookingUp] = useState(false);
 
   const { data: walkins = [], isLoading } = useQuery({
     queryKey: ["walk_ins"],
@@ -36,11 +38,24 @@ export function WalkInsPage() {
       const { data, error } = await supabase
         .from("walk_ins")
         .select("*, service:services(name, price), barber:barbers(id, name)")
-        .order("created_at", { ascending: true });
+        .order("queue_number", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data;
     },
   });
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin_walk_ins_live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "walk_ins" },
+        () => qc.invalidateQueries({ queryKey: ["walk_ins"] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const { data: barbers = [] } = useQuery({
     queryKey: ["barbers", "active"],
@@ -90,6 +105,8 @@ export function WalkInsPage() {
       const { error } = await supabase.from("walk_ins").insert({
         customer_name: name.trim(),
         customer_phone: linkedCustomer?.phone ?? null,
+        customer_email: linkedCustomer?.email ?? null,
+        user_id: linkedCustomer?.user_id ?? null,
         service_id: serviceId || null,
         estimated_wait_minutes: 15,
         status: "waiting",
@@ -103,6 +120,25 @@ export function WalkInsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const handleEmailLookup = async () => {
+    const email = emailLookup.trim().toLowerCase();
+    if (!email) return;
+    setLookingUp(true);
+    const { data, error } = await supabase.rpc("lookup_customer_by_email", { p_email: email });
+    setLookingUp(false);
+    if (error) return toast.error(error.message);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return toast.error("No account found for that email");
+    setLinkedCustomer({
+      name: row.full_name ?? row.email ?? "Customer",
+      phone: row.phone ?? null,
+      email: row.email ?? email,
+      user_id: row.user_id ?? null,
+    });
+    setName(row.full_name ?? row.email ?? "");
+    toast.success(`Linked account: ${row.full_name ?? row.email}`);
+  };
 
   const updateWalkin = useMutation({
     mutationFn: async (vars: { id: string; patch: any }) => {
@@ -144,6 +180,22 @@ export function WalkInsPage() {
             <div className="space-y-1.5">
               <Label htmlFor="wi-name">Customer name *</Label>
               <Input id="wi-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="wi-email">Look up by email</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="wi-email"
+                  type="email"
+                  value={emailLookup}
+                  onChange={(e) => setEmailLookup(e.target.value)}
+                  placeholder="customer@gmail.com"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleEmailLookup(); } }}
+                />
+                <Button type="button" variant="outline" onClick={handleEmailLookup} disabled={lookingUp}>
+                  {lookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Link existing customer (optional)</Label>
@@ -213,13 +265,19 @@ export function WalkInsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <Button type="submit" className="w-full" disabled={addWalkin.isPending}>
                 {addWalkin.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                 Add to queue
               </Button>
             </div>
           </form>
+          {linkedCustomer && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Linked to account: <span className="font-medium text-foreground">{linkedCustomer.name}</span>
+              {linkedCustomer.email ? ` · ${linkedCustomer.email}` : ""}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -236,8 +294,13 @@ export function WalkInsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Current queue</CardTitle>
-          <CardDescription>Assign waiting customers and update status</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            Current queue
+            <Badge variant="outline" className="gap-1 font-normal">
+              <Radio className="h-3 w-3 animate-pulse text-green-500" /> Live
+            </Badge>
+          </CardTitle>
+          <CardDescription>Assign waiting customers and update status — updates in real time</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -249,14 +312,19 @@ export function WalkInsPage() {
           {active.map((w) => (
             <div key={w.id} className="grid grid-cols-1 items-center gap-3 rounded-lg border p-3 md:flex md:justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar className="h-10 w-10 shrink-0">
-                  <AvatarFallback>{w.customer_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}</AvatarFallback>
-                </Avatar>
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                  <span className="text-sm font-bold">
+                    {w.queue_number != null ? `#${w.queue_number}` : "—"}
+                  </span>
+                </div>
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{w.customer_name}</p>
+                  <p className="truncate font-medium">
+                    {w.customer_name}
+                    {w.user_id && <Badge variant="secondary" className="ml-2 text-[10px]">Account</Badge>}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {w.service?.name ?? "No service"} {w.service?.price ? `· ₱${Number(w.service.price).toLocaleString()}` : ""}
-                    {w.customer_phone ? ` · ${w.customer_phone}` : ""}
+                    {w.customer_email ? ` · ${w.customer_email}` : ""}
                   </p>
                 </div>
               </div>

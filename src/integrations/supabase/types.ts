@@ -438,35 +438,47 @@ export type Database = {
         Row: {
           barber_id: string | null
           created_at: string
+          customer_email: string | null
           customer_name: string
           customer_phone: string | null
           estimated_wait_minutes: number
           id: string
           notes: string | null
+          queue_number: number | null
+          served_at: string | null
           service_id: string | null
           status: Database["public"]["Enums"]["walkin_status"]
+          user_id: string | null
         }
         Insert: {
           barber_id?: string | null
           created_at?: string
+          customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
           estimated_wait_minutes?: number
           id?: string
           notes?: string | null
+          queue_number?: number | null
+          served_at?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["walkin_status"]
+          user_id?: string | null
         }
         Update: {
           barber_id?: string | null
           created_at?: string
+          customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
           estimated_wait_minutes?: number
           id?: string
           notes?: string | null
+          queue_number?: number | null
+          served_at?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["walkin_status"]
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -487,6 +499,33 @@ export type Database = {
       }
     }
     Views: {
+      queue_public: {
+        Row: {
+          created_at: string | null
+          first_name: string | null
+          id: string | null
+          queue_number: number | null
+          served_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_name?: never
+          id?: string | null
+          queue_number?: number | null
+          served_at?: string | null
+          status?: never
+        }
+        Update: {
+          created_at?: string | null
+          first_name?: never
+          id?: string | null
+          queue_number?: number | null
+          served_at?: string | null
+          status?: never
+        }
+        Relationships: []
+      }
       time_off_admin: {
         Row: {
           barber_id: string | null
@@ -557,6 +596,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      lookup_customer_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          email: string
+          full_name: string
+          phone: string
+          user_id: string
+        }[]
       }
       public_booking_create: {
         Args: {
