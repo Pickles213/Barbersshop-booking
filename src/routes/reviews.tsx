@@ -22,56 +22,7 @@ export const Route = createFileRoute("/reviews")({
   component: ReviewsPage,
 });
 
-const MOCK_REVIEWS = [
-  {
-    id: "mock1",
-    customer_name: "James S.",
-    service_name: "Skin Fade Special",
-    rating: 5,
-    comment: "Hands down the best fade in Makati. Ian is a true craftsman. Highly recommend the hot towel shave too!",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString(),
-  },
-  {
-    id: "mock2",
-    customer_name: "Francis L.",
-    service_name: "Classic Cut + Beard Combo",
-    rating: 5,
-    comment: "Eli Mendoza is extremely detail-oriented. The shop's brutalist vibe matches the precision of the cuts.",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString(),
-  },
-  {
-    id: "mock3",
-    customer_name: "Marco D.",
-    service_name: "Kids Cut",
-    rating: 5,
-    comment: "Brought my son here and Sam Villar was incredibly patient and delivered a clean style. We will be back.",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 6).toISOString(),
-  },
-  {
-    id: "mock4",
-    customer_name: "Daniel C.",
-    service_name: "Buzz Cut & Hair Tattoo",
-    rating: 5,
-    comment: "Awesome clean shave and sharp line design. Quick service, cool staff, cool music. 10/10.",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 8).toISOString(),
-  },
-  {
-    id: "mock5",
-    customer_name: "Andrew K.",
-    service_name: "Hot Towel Shave",
-    rating: 4,
-    comment: "Very relaxing hot towel service. Perfect beard outline. Only downside was they started 5 minutes late, but they made up for it in quality.",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 10).toISOString(),
-  },
-  {
-    id: "mock6",
-    customer_name: "Robbie P.",
-    service_name: "Beard Sculpting",
-    rating: 5,
-    comment: "They understand how to shape beards perfectly according to your face shape. Best place in Manila.",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 12).toISOString(),
-  },
-];
+
 
 function ReviewsPage() {
   const [search, setSearch] = useState("");
@@ -89,9 +40,7 @@ function ReviewsPage() {
     },
   });
 
-  const reviewsList = reviewsQuery.data && reviewsQuery.data.length > 0
-    ? reviewsQuery.data
-    : MOCK_REVIEWS;
+  const reviewsList = reviewsQuery.data ?? [];
 
   const filteredReviews = reviewsList.filter((r) => {
     const matchesSearch =
@@ -200,7 +149,7 @@ function ReviewsPage() {
               {filteredReviews.map((r: any) => (
                 <div
                   key={r.id}
-                  className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors min-h-[260px] shadow-sm"
+                  className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 hover:-translate-y-1 hover:scale-[1.01] hover:border-black dark:hover:border-white hover:shadow-xl transition-all duration-350 ease-out min-h-[260px] shadow-sm cursor-default"
                 >
                   <div className="space-y-4">
                     {/* Stars */}
@@ -210,15 +159,15 @@ function ReviewsPage() {
                           key={i}
                           className={cn(
                             "h-4 w-4",
-                            i < r.rating
+                            i < Number(r.rating)
                               ? "fill-amber-400 text-amber-400"
-                              : "text-zinc-300 dark:text-zinc-800"
+                              : "text-zinc-200 dark:text-zinc-800"
                           )}
                         />
                       ))}
                     </div>
 
-                    <p className="text-sm text-zinc-700 dark:text-zinc-350 font-light leading-relaxed">
+                    <p className="font-serif italic text-lg leading-relaxed text-zinc-800 dark:text-zinc-200">
                       "{r.comment || "Outstanding cut! The staff was extremely professional and the booking process online was super convenient."}"
                     </p>
                   </div>

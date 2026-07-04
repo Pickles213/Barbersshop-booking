@@ -62,36 +62,7 @@ function HomePage() {
     },
   });
 
-  const MOCK_REVIEWS = [
-    {
-      id: "mock1",
-      customer_name: "James S.",
-      service_name: "Skin Fade Special",
-      rating: 5,
-      comment: "Hands down the best fade in Makati. Ian is a true craftsman. Highly recommend the hot towel shave too!",
-      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2).toISOString(),
-    },
-    {
-      id: "mock2",
-      customer_name: "Francis L.",
-      service_name: "Classic Cut + Beard Combo",
-      rating: 5,
-      comment: "Eli Mendoza is extremely detail-oriented. The shop's brutalist vibe matches the precision of the cuts.",
-      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 4).toISOString(),
-    },
-    {
-      id: "mock3",
-      customer_name: "Marco D.",
-      service_name: "Kids Cut",
-      rating: 5,
-      comment: "Brought my son here and Sam Villar was incredibly patient and delivered a clean style. We will be back.",
-      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000 * 6).toISOString(),
-    },
-  ];
-
-  const reviewsList = reviewsQuery.data && reviewsQuery.data.length > 0
-    ? reviewsQuery.data
-    : MOCK_REVIEWS;
+  const reviewsList = reviewsQuery.data ?? [];
 
   // ── Slideshow state ───────────────────────────────────────────────────────
   const [activeSlide, setActiveSlide] = useState(0);
@@ -542,69 +513,71 @@ function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════════
-          CUSTOMER REVIEWS — High Contrast Testimonials
+          CUSTOMER REVIEWS — High Contrast Testimonials (Displayed only when reviews exist)
           ════════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 bg-white dark:bg-zinc-950 text-black dark:text-white border-t border-b border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto max-w-7xl px-6 md:px-10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16">
-            <div>
-              <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500">
-                [ CLIENT FEEDBACK ]
-              </span>
-              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight mt-2">
-                CUSTOMER REVIEWS
-              </h2>
-            </div>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="rounded-full border-black dark:border-white bg-transparent text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black font-mono text-xs font-bold tracking-[0.2em] uppercase px-8 h-12"
-            >
-              <Link to="/reviews">
-                SEE ALL REVIEWS <ArrowUpRight className="ml-2 h-4 w-4 stroke-[2.5]" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {reviewsList.slice(0, 3).map((r: any) => (
-              <div
-                key={r.id}
-                className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 h-64 shadow-sm"
-              >
-                <div className="space-y-4">
-                  <div className="flex gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={cn(
-                          "h-4 w-4",
-                          i < r.rating
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-zinc-250 dark:text-zinc-800"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm text-zinc-650 dark:text-zinc-400 font-light leading-relaxed line-clamp-3">
-                    "{r.comment || "Great service, very professional haircut!"}"
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs font-mono">
-                  <span className="font-bold text-black dark:text-white uppercase">
-                    [ {r.customer_name} ]
-                  </span>
-                  <span className="text-zinc-450 dark:text-zinc-500 uppercase">
-                    {r.service_name}
-                  </span>
-                </div>
+      {!reviewsQuery.isLoading && reviewsList.length > 0 && (
+        <section className="py-24 bg-white dark:bg-zinc-950 text-black dark:text-white border-t border-b border-zinc-200 dark:border-zinc-800">
+          <div className="mx-auto max-w-7xl px-6 md:px-10">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500">
+                  [ CLIENT FEEDBACK ]
+                </span>
+                <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight mt-2">
+                  CUSTOMER REVIEWS
+                </h2>
               </div>
-            ))}
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="rounded-full border-black dark:border-white bg-transparent text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black font-mono text-xs font-bold tracking-[0.2em] uppercase px-8 h-12"
+              >
+                <Link to="/reviews">
+                  SEE ALL REVIEWS <ArrowUpRight className="ml-2 h-4 w-4 stroke-[2.5]" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {reviewsList.slice(0, 3).map((r: any) => (
+                <div
+                  key={r.id}
+                  className="flex flex-col justify-between p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 h-64 shadow-sm hover:-translate-y-1 hover:scale-[1.01] hover:border-black dark:hover:border-white hover:shadow-xl transition-all duration-350 ease-out cursor-default"
+                >
+                  <div className="space-y-4">
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={cn(
+                            "h-4 w-4 transition-colors",
+                            i < Number(r.rating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-zinc-200 dark:text-zinc-800"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <p className="font-serif italic text-lg leading-relaxed text-zinc-800 dark:text-zinc-200 line-clamp-3">
+                      "{r.comment || "Great service, very professional haircut!"}"
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[11px] font-mono tracking-wider">
+                    <span className="font-black text-black dark:text-white uppercase">
+                      [ {r.customer_name} ]
+                    </span>
+                    <span className="text-zinc-500 uppercase font-bold text-[10px]">
+                      {r.service_name}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ════════════════════════════════════════════════════════════════════
           BOTTOM CTA BLOCK
