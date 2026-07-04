@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, UserPlus, CheckCircle2, XCircle, Loader2, Search, Radio } from "lucide-react";
+import { Clock, UserPlus, CheckCircle2, XCircle, Loader2, Search, Radio, Star } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 import { DashboardHeader } from "./dashboard-header";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +33,30 @@ export function WalkInsPage() {
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [emailLookup, setEmailLookup] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
+
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedWalkinForReview, setSelectedWalkinForReview] = useState<any>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+
+  const submitReview = useMutation({
+    pointer: "walk-ins",
+    mutationFn: async (reviewPayload: {
+      customer_name: string;
+      service_name: string;
+      rating: number;
+      comment: string;
+    }) => {
+      const { error } = await supabase.from("reviews").insert(reviewPayload);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Review logged successfully!");
+      setReviewDialogOpen(false);
+      setSelectedWalkinForReview(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: walkins = [], isLoading } = useQuery({
     queryKey: ["walk_ins"],
@@ -346,7 +372,13 @@ export function WalkInsPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => updateWalkin.mutate({ id: w.id, patch: { status: "completed" } })}
+                  onClick={() => {
+                    updateWalkin.mutate({ id: w.id, patch: { status: "completed" } });
+                    setSelectedWalkinForReview(w);
+                    setReviewRating(5);
+                    setReviewComment("");
+                    setReviewDialogOpen(true);
+                  }}
                 >
                   <CheckCircle2 className="mr-1 h-4 w-4" /> Done
                 </Button>
@@ -362,6 +394,75 @@ export function WalkInsPage() {
           ))}
         </CardContent>
       </Card>
+
+      {/* Review Dialog Popup */}
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-950 border-2 border-black dark:border-white rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-sm font-black uppercase tracking-widest text-zinc-500">
+              [ LOG CUSTOMER REVIEW ]
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-zinc-650 dark:text-zinc-400">
+              Write a quick review on behalf of <strong>{selectedWalkinForReview?.customer_name}</strong> for their <strong>{selectedWalkinForReview?.service?.name || "Service"}</strong>.
+            </p>
+            
+            <div className="space-y-2">
+              <Label className="font-mono text-xs font-bold uppercase text-zinc-400">Rating</Label>
+              <div className="flex gap-1 justify-center my-2">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setReviewRating(num)}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={cn(
+                        "h-8 w-8 transition-colors",
+                        num <= reviewRating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-zinc-200 dark:text-zinc-800"
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-mono text-xs font-bold uppercase text-zinc-400">Comments</Label>
+              <Textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="What did they think of their new look? (optional)"
+                rows={3}
+                className="rounded-xl border-zinc-350 dark:border-zinc-800 focus-visible:ring-black dark:focus-visible:ring-white"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setReviewDialogOpen(false)} className="rounded-full font-mono text-xs uppercase tracking-widest">
+              Skip
+            </Button>
+            <Button
+              disabled={submitReview.isPending}
+              onClick={() => {
+                submitReview.mutate({
+                  customer_name: selectedWalkinForReview?.customer_name || "Guest",
+                  service_name: selectedWalkinForReview?.service?.name || "Service",
+                  rating: reviewRating,
+                  comment: reviewComment,
+                });
+              }}
+              className="rounded-full bg-black text-white dark:bg-white dark:text-black font-mono text-xs uppercase tracking-widest px-6"
+            >
+              {submitReview.isPending ? "Submitting..." : "Submit Review"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

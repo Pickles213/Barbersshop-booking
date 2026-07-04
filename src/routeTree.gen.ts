@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as ReviewsRouteImport } from './routes/reviews'
 import { Route as QueueRouteImport } from './routes/queue'
 import { Route as MyBookingsRouteImport } from './routes/my-bookings'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -33,6 +34,11 @@ import { Route as AdminAuditLogsRouteImport } from './routes/admin/audit-logs'
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewsRoute = ReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QueueRoute = QueueRouteImport.update({
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/my-bookings': typeof MyBookingsRoute
   '/queue': typeof QueueRoute
+  '/reviews': typeof ReviewsRoute
   '/services': typeof ServicesRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/my-bookings': typeof MyBookingsRoute
   '/queue': typeof QueueRoute
+  '/reviews': typeof ReviewsRoute
   '/services': typeof ServicesRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/my-bookings': typeof MyBookingsRoute
   '/queue': typeof QueueRoute
+  '/reviews': typeof ReviewsRoute
   '/services': typeof ServicesRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/my-bookings'
     | '/queue'
+    | '/reviews'
     | '/services'
     | '/admin/audit-logs'
     | '/admin/barbers'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/my-bookings'
     | '/queue'
+    | '/reviews'
     | '/services'
     | '/admin/audit-logs'
     | '/admin/barbers'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/my-bookings'
     | '/queue'
+    | '/reviews'
     | '/services'
     | '/admin/audit-logs'
     | '/admin/barbers'
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   MyBookingsRoute: typeof MyBookingsRoute
   QueueRoute: typeof QueueRoute
+  ReviewsRoute: typeof ReviewsRoute
   ServicesRoute: typeof ServicesRoute
 }
 
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reviews': {
+      id: '/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof ReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/queue': {
@@ -463,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   MyBookingsRoute: MyBookingsRoute,
   QueueRoute: QueueRoute,
+  ReviewsRoute: ReviewsRoute,
   ServicesRoute: ServicesRoute,
 }
 export const routeTree = rootRouteImport

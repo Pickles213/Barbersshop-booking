@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Check, ChevronLeft, ChevronRight, Clock, Scissors, Star, User, ArrowLeft, ArrowUpRight, CheckCircle2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -78,8 +78,8 @@ function BookPage() {
     null,
   );
 
-  // Date selection state
-  const [dateOffset, setDateOffset] = useState(0);
+  // Date selection state (using scroll container for paginating 60 days)
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showFullCalendar, setShowFullCalendar] = useState(false);
 
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
@@ -110,20 +110,18 @@ function BookPage() {
 
   const dateStr = date ? format(date, "yyyy-MM-dd") : null;
 
-  // Generate 7 visible days based on dateOffset
+  // Generate 60 visible days (approx. 2 months)
   const visibleDates = useMemo(() => {
     const list: Date[] = [];
     const baseDate = new Date();
     baseDate.setHours(0, 0, 0, 0);
-    // Add offset days to baseDate
-    baseDate.setDate(baseDate.getDate() + dateOffset);
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 60; i++) {
       const d = new Date(baseDate);
       d.setDate(baseDate.getDate() + i);
       list.push(d);
     }
     return list;
-  }, [dateOffset]);
+  }, []);
 
   const slots = useQuery({
     queryKey: ["slots", barberId, dateStr, service?.duration_minutes],
@@ -332,15 +330,22 @@ function BookPage() {
                     <div className="flex items-center border border-zinc-200 dark:border-zinc-800 rounded-full p-1 bg-zinc-50 dark:bg-zinc-900">
                       <button
                         type="button"
-                        onClick={() => setDateOffset((prev) => Math.max(0, prev - 7))}
-                        disabled={dateOffset === 0}
-                        className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                        onClick={() => {
+                          if (scrollContainerRef.current) {
+                            scrollContainerRef.current.scrollBy({ left: -340, behavior: "smooth" });
+                          }
+                        }}
+                        className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
                       >
                         <ChevronLeft className="h-4 w-4 text-black dark:text-white stroke-[2.5]" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDateOffset((prev) => prev + 7)}
+                        onClick={() => {
+                          if (scrollContainerRef.current) {
+                            scrollContainerRef.current.scrollBy({ left: 340, behavior: "smooth" });
+                          }
+                        }}
                         className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
                       >
                         <ChevronRight className="h-4 w-4 text-black dark:text-white stroke-[2.5]" />
@@ -374,7 +379,7 @@ function BookPage() {
                                   setDate(d);
                                   setSlot(null);
                                   
-                                  // Compute diffDays from today to shift the week slider offset
+                                  // Compute diffDays from today to scroll horizontal view into place
                                   const today = new Date();
                                   today.setHours(0, 0, 0, 0);
                                   const targetDate = new Date(d);
@@ -382,8 +387,12 @@ function BookPage() {
                                   const diffTime = targetDate.getTime() - today.getTime();
                                   const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
                                   
-                                  // Align the horizontal week slider offset to show the week of selected date
-                                  setDateOffset(Math.floor(diffDays / 7) * 7);
+                                  if (scrollContainerRef.current) {
+                                    scrollContainerRef.current.scrollTo({
+                                      left: diffDays * 98 - 120,
+                                      behavior: "smooth"
+                                    });
+                                  }
                                   setShowFullCalendar(false);
                                 }
                               }}
@@ -416,8 +425,8 @@ function BookPage() {
                   </div>
                 </div>
 
-                {/* 2. Horizontal Date Cards list (7 days matching current offset) */}
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x pointer-events-auto">
+                {/* 2. Horizontal Date Cards list (60 days visible with scroll-smooth snap) */}
+                <div ref={scrollContainerRef} className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x pointer-events-auto scroll-smooth">
                   {visibleDates.map((d) => {
                     const isSel = date && format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
                     const isToday = format(d, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
