@@ -1,50 +1,31 @@
-## Live Queue — reshape to "Now serving + your position + wait time"
+## Database ↔ Codebase Sync Audit — Result: All Green
 
-Most infrastructure is already in place (walk_ins queue_number, daily reset trigger, `queue_public` view, Google sign-in, admin email lookup, realtime). This plan refactors the public queue page to match the new spec and adds wait-time math based on service duration.
+I inspected the live database against `src/integrations/supabase/types.ts` and the frontend callers. **No mismatches, no missing columns, no permission gaps.** No fixes needed.
 
-### 1. Database (small migration)
+### 1. Core tables & columns
+All 13 required tables exist with the expected columns and types: `services`, `barbers`, `barber_portfolio`, `bookings`, `walk_ins`, `schedules`, `time_off`, `holidays`, `notifications`, `shop_settings`, `profiles`, `user_roles`, `audit_logs`. Matches `types.ts`.
 
-- Ensure `queue_public` view exposes `service_id` (or `duration_minutes`) so anon can sum wait time without seeing PII. Add `duration_minutes` directly to the view via a join to `services`.
-- Add narrow policy allowing an authenticated user to SELECT their own `walk_ins` row (needed so signed-in users can see their queue_number / status without exposing others). If already present from prior turn, skip.
-- No new tables.
+Note (not a bug): `src/types/db.ts` is a hand-written frontend view-model file with an idealized `Notification { user_id }` that doesn't match the DB. It isn't wired to Supabase queries, so it doesn't cause runtime issues — the generated `types.ts` is the source of truth for Supabase calls.
 
-### 2. Public `/queue` page — rewrite
+### 2. Live queue & walk-ins
+- `walk_ins` has `queue_number int`, `served_at timestamptz`, `user_id uuid`, `customer_email text` ✅
+- `queue_public` view exposes `id, queue_number, first_name, status, created_at, served_at, service_id, duration_minutes` — matches `types.ts` and what `/queue` reads ✅
 
-Remove the full waiting list. Show only:
+### 3. RPC functions
+Present with correct signatures & `SECURITY DEFINER`:
+- `get_available_slots(p_barber_id uuid, p_date date, p_duration_minutes int)`
+- `public_booking_create(...)` — 8 params, matches `createBooking` call
+- `lookup_customer_by_email(p_email text)` — admin/staff gated
+- `has_role(_user_id uuid, _role app_role)`
 
-- **Now serving**: big `#N` from the current `in_progress` row (or `—` if none).
-- **If signed in AND has an active ticket** (waiting/in_progress today):
-  - "You are Nth in line" (ordinal, based on count of waiting rows with lower queue_number, +1)
-  - "About X min wait" = sum of `duration_minutes` for all waiting rows ahead + remaining time of the in-progress row (fallback to service duration if unknown).
-  - If in_progress: "You're up now".
-- **If signed in with no ticket**: small note "You're not in today's queue — ask the attendant to check you in."
-- **If not signed in**: prominent "Sign in with Google to track your spot" button (uses existing `lovable.auth.signInWithOAuth("google")`).
-- Realtime subscription on `walk_ins` invalidates queries.
-- Mobile-first, giant numbers, live badge.
+### 4. RLS & permissions
+RLS is enabled with correct policies:
+- Anon read: `services`, `barbers`, `barber_portfolio`, `schedules`, `holidays`, `time_off`, `shop_settings`, and `queue_public` view (via security-definer view; anon has no direct SELECT on `walk_ins` PII columns — this was hardened in the last security fix).
+- Authenticated read own: `bookings` (`user_id = auth.uid()`), `walk_ins` (`user_id = auth.uid()`), `user_roles`, `profiles`.
+- Admin/staff: full manage policies via `has_role()` on all operational tables.
 
-### 3. Admin walk-ins page
+### 5. Realtime
+`walk_ins` is in the `supabase_realtime` publication ✅ — the `/queue` channel subscription will receive live updates.
 
-Already has queue numbers, email lookup, realtime, and Done button. Small tweaks:
-- Ensure `served_at` is stamped when marking Done (add to the update patch; DB trigger `tg_stamp_served_at` may already do this — verify and rely on it).
-- No layout changes.
-
-### 4. Landing page
-
-Add secondary CTA "Check the live queue" → `/queue` next to "Book now" in `src/routes/index.tsx` hero.
-
-### 5. Header
-
-"Live queue" link already added — keep as is.
-
-### Files
-
-- New migration: update `queue_public` view to include `service_id` + `duration_minutes`; add self-select policy on `walk_ins` if missing.
-- Rewrite `src/routes/queue.tsx` to the "Now serving + personal" layout.
-- Small edit to `src/routes/index.tsx` for the CTA.
-- No changes to admin walk-ins page beyond confirming `served_at` behavior.
-
-### Technical notes
-
-- Position lookup for signed-in users: query `walk_ins` filtered by `user_id = auth.uid()`, today, status in (waiting, in_progress). Then read the public view for the ordered waiting list to compute "Nth" and wait sum locally.
-- Queue numbers never renumber (already the case — trigger only assigns on insert).
-- Wait math: `sum(duration_minutes of rows waiting with queue_number < mine) + (remaining time of in_progress row, estimated as its service duration)`.
+### Plan
+Nothing to change. On approval I'll simply confirm the audit result to you (no code or migration edits will run).
