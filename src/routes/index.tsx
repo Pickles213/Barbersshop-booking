@@ -1,36 +1,33 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Clock, MapPin, Phone, Scissors, Star } from "lucide-react";
+import { ArrowUpRight, Clock, MapPin, Phone, Scissors, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
 import { cn, formatTime } from "@/lib/utils";
-// trigger build
+
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Southside Barbers — Premium Barber Shop" },
+      { title: "Southside Barbers — Premium Barbershop Network" },
       {
         name: "description",
-        content: "Classic cuts, hot-towel shaves and modern styling. Book your appointment online in seconds.",
+        content: "Precision cuts, hot-towel shaves and modern styling. Book your appointment online without unnecessary waiting.",
       },
-      { property: "og:title", content: "Southside Barbers — Premium Barber Shop" },
+      { property: "og:title", content: "Southside Barbers — Premium Barbershop Network" },
       {
         property: "og:description",
-        content: "Classic cuts, hot-towel shaves and modern styling. Book online in seconds.",
+        content: "Precision cuts, hot-towel shaves and modern styling. Book online without unnecessary waiting.",
       },
     ],
   }),
   component: HomePage,
 });
 
-// ─── Slideshow assets ──────────────────────────────────────────────────────────
+// ─── Slideshow & Portfolio assets ──────────────────────────────────────────────
 const HERO_IMAGES = [
   "/images/slide1.png",
   "/images/slide2.png",
@@ -39,306 +36,507 @@ const HERO_IMAGES = [
   "/images/slide5.png",
 ];
 
-// ─── Page component ────────────────────────────────────────────────────────────
+const PORTFOLIO_FALLBACKS = [
+  "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&q=80",
+  "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=80",
+  "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&q=80",
+  "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&q=80",
+];
+
 function HomePage() {
-  // ── Data queries (untouched) ──────────────────────────────────────────────
+  // ── Data queries ──────────────────────────────────────────────────────────
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
   const shop = useQuery({ queryKey: ["shop"], queryFn: fetchShopSettings });
 
-  // ── Slideshow state (untouched) ───────────────────────────────────────────
+  // ── Slideshow state ───────────────────────────────────────────────────────
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
-    const id = setTimeout(() => setActiveSlide((prev) => (prev + 1) % HERO_IMAGES.length), 4000);
+    const id = setTimeout(() => setActiveSlide((prev) => (prev + 1) % HERO_IMAGES.length), 4500);
     return () => clearTimeout(id);
   }, [activeSlide]);
 
-  const featured = (services.data ?? []).slice(0, 3);
-  const topBarbers = (barbers.data ?? []).slice(0, 3);
+  const featuredServices = (services.data ?? []).slice(0, 6);
+  const topBarbers = (barbers.data ?? []).slice(0, 4);
 
   return (
     <SiteLayout>
       {/* ════════════════════════════════════════════════════════════════════
-          HERO — Industrial monochrome, z-stack fixed
-          z-0  → slide images (always above section bg)
-          z-10 → gradient vignette masks
-          z-20 → text, CTAs, nav arrows
+          HERO — Editorial Brutalist Monochrome Layout
           ════════════════════════════════════════════════════════════════════ */}
-      <section className="relative w-full h-[85vh] bg-zinc-950 overflow-hidden flex items-center">
-        {/* ── z-0 · Crossfade slide images ─────────────────────────────── */}
-        <div className="absolute inset-0 z-0">
-          {HERO_IMAGES.map((src, i) => (
-            <img
-              key={src}
-              src={src}
-              alt=""
-              className={cn(
-                "absolute inset-0 w-full h-full object-cover transition-opacity duration-[900ms] ease-in-out",
-                i === activeSlide ? "opacity-100" : "opacity-0",
-              )}
-            />
-          ))}
-        </div>
-
-        {/* ── z-10 · Left-to-right vignette (text side stays dark) ──────── */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-
-        {/* ── z-10 · Top-to-bottom fade (merges cleanly into page below) ── */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-zinc-950" />
-
-        {/* ── z-10 · Global darkening tint (image-agnostic legibility) ──── */}
-        <div className="absolute inset-0 z-10 bg-black/30" />
-
-        {/* ── z-20 · Text & CTAs ───────────────────────────────────────── */}
-        <div className="relative z-20 flex flex-col justify-center h-full px-6 md:px-16 max-w-4xl text-white">
-          {/* Eye-brow label */}
-          <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400 backdrop-blur-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-            Walk-ins welcome · Bookings preferred
+      <section className="relative w-full bg-white dark:bg-zinc-950 text-black dark:text-white pt-10 pb-20 overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          {/* Top Subhead */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <span className="text-xs font-mono font-bold uppercase tracking-[0.25em] text-zinc-500">
+              [ {shop.data?.shop_name || "SOUTHSIDE BARBERS"} NETWORK ]
+            </span>
+            <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-wider text-zinc-500">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Queue Open
+              </span>
+              <span>•</span>
+              <Link to="/queue" className="underline hover:text-black dark:hover:text-white transition-colors">
+                Check wait times ↗
+              </Link>
+            </div>
           </div>
 
-          {/* Main headline — crisp white, no tints */}
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-lg">
-            Look sharp. <span className="text-white">Feel sharper.</span>
-          </h1>
+          {/* Massive Editorial Headline */}
+          <div className="my-6">
+            <h1 className="text-6xl sm:text-8xl md:text-9xl lg:text-[11rem] font-black tracking-tighter uppercase leading-[0.88] select-none text-black dark:text-white">
+              SOUTHSIDE
+            </h1>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-4">
+              <h1 className="text-6xl sm:text-8xl md:text-9xl lg:text-[11rem] font-black tracking-tighter uppercase leading-[0.88] select-none text-zinc-400 dark:text-zinc-600">
+                BARBERS.
+              </h1>
+              <p className="max-w-md text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed pb-3">
+                We understand the pace of the city and the needs of its residents. We offer high-quality grooming at an affordable price, without unnecessary waiting. Precision, experience, and results that speak for themselves.
+              </p>
+            </div>
+          </div>
 
-          {/* Sub-copy — metallic silver/zinc */}
-          <p className="mt-5 max-w-md text-base md:text-lg text-zinc-400 leading-relaxed font-light tracking-wide">
-            {shop.data?.shop_name ? `Welcome to ${shop.data.shop_name}.` : "Welcome."} Master barbers, classic
-            technique, modern style.
-          </p>
+          {/* Editorial Grid / Slider Showcase */}
+          <div className="mt-14 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Left Box · Circular Booking CTA */}
+            <div className="lg:col-span-4 flex flex-col justify-between h-full bg-zinc-100 dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+              <div className="space-y-3">
+                <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-zinc-500">
+                  [ FAST ONLINE BOOKING ]
+                </span>
+                <h3 className="text-2xl font-extrabold uppercase tracking-tight">
+                  No queues and no surprises.
+                </h3>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Lock in your slot in under 30 seconds. Choose your master barber, pick your style, and arrive just in time.
+                </p>
+              </div>
 
-          {/* CTAs */}
-          <div className="mt-9 flex flex-wrap gap-4">
-            {/* Primary — solid white, black text */}
+              <div className="mt-10 flex items-center justify-between">
+                <Link
+                  to="/book"
+                  className="group relative flex h-28 w-28 items-center justify-center rounded-full bg-black text-white dark:bg-white dark:text-black font-extrabold text-xs tracking-widest uppercase shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
+                >
+                  <span className="text-center leading-tight">
+                    BOOK<br />NOW<br />
+                    <ArrowUpRight className="inline h-4 w-4 mt-0.5 stroke-[2.5]" />
+                  </span>
+                </Link>
+
+                <div className="text-right font-mono text-xs text-zinc-500 space-y-1">
+                  <div>OPEN DAILY</div>
+                  <div className="font-bold text-black dark:text-white">
+                    {shop.data?.open_time ? formatTime(shop.data.open_time.slice(0, 5)) : "09:00"} – {shop.data?.close_time ? formatTime(shop.data.close_time.slice(0, 5)) : "20:00"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Box · Slideshow Banner */}
+            <div className="lg:col-span-8 relative h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+              {HERO_IMAGES.map((src, i) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt="Barbershop showcase"
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out",
+                    i === activeSlide ? "opacity-100 scale-100" : "opacity-0 scale-105"
+                  )}
+                />
+              ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              
+              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white z-10">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-300">
+                    [ MASTER CRAFTSMANSHIP ]
+                  </span>
+                  <h4 className="text-xl md:text-2xl font-bold uppercase tracking-tight mt-1">
+                    Classic Technique. Modern Style.
+                  </h4>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {HERO_IMAGES.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveSlide(i)}
+                      className={cn(
+                        "h-1.5 rounded-full transition-all duration-300",
+                        i === activeSlide ? "w-8 bg-white" : "w-2 bg-white/40 hover:bg-white/70"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          MARQUEE TICKER TAPE
+          ════════════════════════════════════════════════════════════════════ */}
+      <div className="w-full bg-black text-white dark:bg-white dark:text-black py-4 overflow-hidden select-none border-b border-zinc-800 dark:border-zinc-200 font-mono text-xs font-black uppercase tracking-[0.3em]">
+        <div className="flex whitespace-nowrap animate-marquee">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <span key={i} className="mx-4 flex items-center gap-8">
+              <span>• HAIRCUT</span>
+              <span>• STYLE</span>
+              <span>• STANDARD</span>
+              <span>• QUALITY</span>
+              <span>• RESULT</span>
+              <span>• PRECISION</span>
+              <span>• SERVICE</span>
+              <span>• BEARD SCULPTING</span>
+              <span>• HOT TOWEL SHAVE</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          ABOUT US & STATISTICS
+          ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-white dark:bg-zinc-950 text-black dark:text-white border-b border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Col · Copy & Stats */}
+            <div className="lg:col-span-7 space-y-8">
+              <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500">
+                [ ABOUT US ]
+              </span>
+              <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight leading-none">
+                SOUTHSIDE IS A MODERN BARBERSHOP NETWORK.
+              </h2>
+              <div className="space-y-4 text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-light leading-relaxed">
+                <p>
+                  Since our inception, we have been building the most premier grooming destination in the city. From a single neighborhood chair, we have created a recognizable standard present for men who value their time and appearance.
+                </p>
+                <p>
+                  Everywhere we welcome our clients the exact same way — with a sharp eye, professional technique, and flawless consistency. Growth and belief in people are the foundations of Southside Barbers.
+                </p>
+              </div>
+
+              {/* Big Number Stats */}
+              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                <div>
+                  <div className="text-4xl sm:text-5xl font-black tracking-tighter">
+                    {barbers.data?.length ? barbers.data.length + "+" : "10+"}
+                  </div>
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mt-1">
+                    Master Barbers
+                  </div>
+                </div>
+                <div>
+                  <div className="text-4xl sm:text-5xl font-black tracking-tighter">80K+</div>
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mt-1">
+                    Satisfied Clients / Yr
+                  </div>
+                </div>
+                <div>
+                  <div className="text-4xl sm:text-5xl font-black tracking-tighter">4.9★</div>
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mt-1">
+                    Average Rating
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Col · Interior Showcase */}
+            <div className="lg:col-span-5">
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
+                <img
+                  src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80"
+                  alt="Barbershop Interior"
+                  className="w-full h-full object-cover filter contrast-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
+                  [ SOUTHSIDE STUDIO · MAKATI ]
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          OUR MISSION — Dark Monochrome Section
+          ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-28 bg-zinc-950 text-white border-b border-zinc-800">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500">
+                [ OUR VALUES ]
+              </span>
+              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight mt-2 text-white">
+                OUR MISSION
+              </h2>
+            </div>
+            <p className="max-w-md text-sm text-zinc-400 font-light leading-relaxed">
+              Our mission is not only to cut hair, but to deliver a consistent result. Regardless of the location or the barber, the client receives transparent service, precise work, and quality control.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left · Image */}
+            <div className="lg:col-span-5">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=80"
+                  alt="Barber Precision Cut"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Right · Numbered Mission Statements */}
+            <div className="lg:col-span-7 divide-y divide-zinc-800">
+              <div className="py-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
+                <div className="flex items-baseline gap-4">
+                  <span className="font-mono text-xs font-bold tracking-[0.2em] text-zinc-500">
+                    [ 01 ]
+                  </span>
+                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-white">
+                    CONSISTENT RESULTS
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-400 font-light max-w-xs sm:text-right">
+                  We deliver high-quality men's haircuts with guaranteed precision every single time.
+                </p>
+              </div>
+
+              <div className="py-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
+                <div className="flex items-baseline gap-4">
+                  <span className="font-mono text-xs font-bold tracking-[0.2em] text-zinc-500">
+                    [ 02 ]
+                  </span>
+                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-white">
+                    ONE STANDARD
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-400 font-light max-w-xs sm:text-right">
+                  The same elite level of service, cleanliness, and quality control across all our barbers.
+                </p>
+              </div>
+
+              <div className="py-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
+                <div className="flex items-baseline gap-4">
+                  <span className="font-mono text-xs font-bold tracking-[0.2em] text-zinc-500">
+                    [ 03 ]
+                  </span>
+                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-white">
+                    RESPECT FOR THE CLIENT
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-400 font-light max-w-xs sm:text-right">
+                  Transparent pricing, zero hidden fees, and punctual scheduling that honors your time.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          MOST POPULAR SERVICES — Numbered Interactive Catalog
+          ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-28 bg-white dark:bg-zinc-950 text-black dark:text-white border-b border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500">
+                [ PRICE & CATALOG ]
+              </span>
+              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight mt-2">
+                MOST POPULAR SERVICES
+              </h2>
+            </div>
+            <div className="flex flex-col items-start md:items-end gap-2">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 font-light">
+                These are the services most frequently chosen by our clients.
+              </p>
+              <Link
+                to="/services"
+                className="text-xs font-mono font-bold uppercase tracking-[0.2em] underline decoration-1 underline-offset-8 hover:text-primary transition-colors"
+              >
+                [ VIEW ALL SERVICES & PRICING ↗ ]
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            {/* Left Col · Numbered Service Rows */}
+            <div className="lg:col-span-8 divide-y divide-zinc-200 dark:divide-zinc-800 border-t border-b border-zinc-200 dark:divide-zinc-800">
+              {featuredServices.map((s, idx) => {
+                const numStr = (idx + 1).toString().padStart(2, "0");
+                return (
+                  <Link
+                    key={s.id}
+                    to="/book"
+                    search={{ service: s.id }}
+                    className="group py-6 flex items-center justify-between gap-4 transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 px-3 -mx-3 rounded-xl"
+                  >
+                    <div className="flex items-baseline gap-4 md:gap-6">
+                      <span className="font-mono text-xs font-bold tracking-[0.2em] text-zinc-400 dark:text-zinc-600 group-hover:text-black dark:group-hover:text-white transition-colors">
+                        [ {numStr} ]
+                      </span>
+                      <div>
+                        <h3 className="text-lg md:text-xl font-extrabold uppercase tracking-tight group-hover:translate-x-1 transition-transform">
+                          {s.name}
+                        </h3>
+                        {s.duration_minutes && (
+                          <span className="text-xs font-mono text-zinc-500">
+                            {s.duration_minutes} MIN · {s.category || "HAIRCUT"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                      <span className="text-base md:text-lg font-bold font-mono">
+                        From ₱{Number(s.price).toFixed(0)}
+                      </span>
+                      <div className="grid h-9 w-9 place-items-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-transparent group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all">
+                        <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+
+              {services.isLoading &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="py-6 flex items-center justify-between animate-pulse">
+                    <div className="h-6 w-48 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                    <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                  </div>
+                ))}
+            </div>
+
+            {/* Right Col · Accompanying Photo */}
+            <div className="lg:col-span-4 sticky top-28">
+              <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
+                <img
+                  src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&q=80"
+                  alt="Barbershop Service"
+                  className="w-full h-full object-cover filter contrast-105"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          SEE OUR WORK — Dark Portfolio Grid
+          ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-28 bg-zinc-950 text-white">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500">
+                [ PORTFOLIO ]
+              </span>
+              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tight mt-2 text-white">
+                SEE OUR WORK
+              </h2>
+            </div>
             <Button
               asChild
+              variant="outline"
               size="lg"
-              className={cn(
-                "bg-white text-black font-bold",
-                "hover:bg-zinc-100",
-                "hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out",
-                "motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
-              )}
+              className="rounded-full border-zinc-700 bg-transparent text-white hover:bg-white hover:text-black font-mono text-xs font-bold tracking-[0.2em] uppercase px-6"
             >
-              <Link to="/book">
-                Book an appointment <ArrowRight className="ml-2 h-4 w-4" />
+              <Link to="/barbers">
+                MEET ALL BARBERS <ArrowUpRight className="ml-2 h-4 w-4 stroke-[2.5]" />
               </Link>
             </Button>
-
-            {/* Secondary — ghost with white border */}
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className={cn(
-                "border border-white/40 bg-transparent text-white",
-                "hover:bg-white/10 hover:border-white/60",
-                "hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out",
-                "motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
-              )}
-            >
-              <Link to="/services">View services</Link>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className={cn(
-                "border border-white/40 bg-transparent text-white",
-                "hover:bg-white/10 hover:border-white/60",
-                "hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out",
-                "motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
-              )}
-            >
-              <Link to="/queue">Check the live queue</Link>
-            </Button>
           </div>
 
-          {/* Shop meta — hours & address */}
-          {(shop.data?.open_time || shop.data?.shop_address) && (
-            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-zinc-500 font-light tracking-wide">
-              {shop.data?.open_time && shop.data?.close_time && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-zinc-400" />
-                  {formatTime(shop.data.open_time.slice(0, 5))} – {formatTime(shop.data.close_time.slice(0, 5))}
-                </div>
-              )}
-              {shop.data?.shop_address && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-                  {shop.data.shop_address}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Slide dot indicators — monochrome white */}
-          <div className="mt-10 flex items-center gap-2">
-            {HERO_IMAGES.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveSlide(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                className={cn(
-                  "rounded-full transition-all duration-300 ease-out",
-                  i === activeSlide ? "w-7 h-[3px] bg-white" : "w-3 h-[3px] bg-white/30 hover:bg-white/55",
-                )}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* ── z-20 · Prev / Next arrow controls ────────────────────────── */}
-        <button
-          onClick={() => setActiveSlide((prev) => (prev - 1 + HERO_IMAGES.length) % HERO_IMAGES.length)}
-          className={cn(
-            "absolute left-4 top-1/2 -translate-y-1/2 z-20",
-            "flex h-10 w-10 items-center justify-center rounded-full",
-            "border border-white/20 bg-black/40 text-white text-xl backdrop-blur-sm",
-            "hover:bg-black/60 hover:border-white/40 hover:scale-110",
-            "active:scale-95 transition-all duration-200",
-          )}
-          aria-label="Previous slide"
-        >
-          ‹
-        </button>
-        <button
-          onClick={() => setActiveSlide((prev) => (prev + 1) % HERO_IMAGES.length)}
-          className={cn(
-            "absolute right-4 top-1/2 -translate-y-1/2 z-20",
-            "flex h-10 w-10 items-center justify-center rounded-full",
-            "border border-white/20 bg-black/40 text-white text-xl backdrop-blur-sm",
-            "hover:bg-black/60 hover:border-white/40 hover:scale-110",
-            "active:scale-95 transition-all duration-200",
-          )}
-          aria-label="Next slide"
-        >
-          ›
-        </button>
-      </section>
-
-      {/* ── Featured Services ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-20">
-        <div className="flex items-end justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Featured services</h2>
-            <p className="mt-2 text-muted-foreground">Crafted by experienced barbers.</p>
-          </div>
-          <Button asChild variant="ghost">
-            <Link to="/services">View all</Link>
-          </Button>
-        </div>
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {featured.map((s) => (
-            <Card
-              key={s.id}
-              className="transition-all duration-300 hover:-translate-y-1 hover:shadow-lg motion-reduce:hover:translate-y-0"
-            >
-              <CardContent className="p-6">
-                {s.category && (
-                  <Badge variant="outline" className="mb-3">
-                    {s.category}
-                  </Badge>
-                )}
-                <h3 className="text-lg font-semibold">{s.name}</h3>
-                {s.description && <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>}
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-2xl font-bold">₱{Number(s.price).toFixed(0)}</span>
-                  <span className="text-sm text-muted-foreground">{s.duration_minutes} min</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {services.isLoading &&
-            Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="h-44 animate-pulse" />
-              </Card>
-            ))}
-        </div>
-      </section>
-
-      {/* ── Meet the Team ─────────────────────────────────────────────────── */}
-      <section className="border-t border-border/60 bg-muted/20">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <div className="flex items-end justify-between">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">Meet the team</h2>
-              <p className="mt-2 text-muted-foreground">Pick your favourite barber.</p>
-            </div>
-            <Button asChild variant="ghost">
-              <Link to="/barbers">View all</Link>
-            </Button>
-          </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {topBarbers.map((b) => (
-              <Card
-                key={b.id}
-                className="group overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg motion-reduce:hover:translate-y-0"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-muted">
-                  {b.avatar_url ? (
-                    <img
-                      src={b.avatar_url}
-                      alt={b.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
-                    />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center text-muted-foreground">
-                      <Scissors className="h-12 w-12" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {(topBarbers.length > 0 ? topBarbers : Array.from({ length: 4 })).map((b: any, idx) => {
+              const imgSrc = b?.avatar_url || PORTFOLIO_FALLBACKS[idx % PORTFOLIO_FALLBACKS.length];
+              return (
+                <div
+                  key={b?.id || idx}
+                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-xl"
+                >
+                  <img
+                    src={imgSrc}
+                    alt={b?.name || `Portfolio ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter contrast-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                  
+                  <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-400">
+                        [ {b?.specialization || "MASTER CUT"} ]
+                      </span>
+                      <h4 className="text-lg font-bold uppercase tracking-tight mt-0.5">
+                        {b?.name || `Style 0${idx + 1}`}
+                      </h4>
                     </div>
-                  )}
-                </div>
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{b.name}</h3>
-                    {b.rating != null && (
-                      <span className="flex items-center gap-1 text-sm">
-                        <Star className="h-3.5 w-3.5 fill-zinc-400 text-zinc-400" />
+                    {b?.rating && (
+                      <span className="flex items-center gap-1 font-mono text-xs text-zinc-300">
+                        <Star className="h-3.5 w-3.5 fill-white text-white" />
                         {Number(b.rating).toFixed(1)}
                       </span>
                     )}
                   </div>
-                  {b.specialization && <p className="mt-1 text-sm text-muted-foreground">{b.specialization}</p>}
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── Bottom CTA ────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-20">
-        <Card className="overflow-hidden bg-primary text-primary-foreground">
-          <CardContent className="grid gap-6 p-10 md:grid-cols-2 md:items-center">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">Ready for a fresh cut?</h2>
-              <p className="mt-2 text-primary-foreground/80">
-                Pick a service, choose your barber, and lock in your slot.
+      {/* ════════════════════════════════════════════════════════════════════
+          BOTTOM CTA BLOCK
+          ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-white dark:bg-zinc-950 text-black dark:text-white border-t border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto max-w-7xl px-6 md:px-10">
+          <div className="rounded-3xl bg-black text-white dark:bg-white dark:text-black p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+            <div className="space-y-3 text-center md:text-left">
+              <span className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-600">
+                [ READY FOR A FRESH CUT? ]
+              </span>
+              <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight">
+                BOOK YOUR HAIRCUT TODAY.
+              </h2>
+              <p className="text-sm text-zinc-300 dark:text-zinc-700 max-w-md">
+                Fast online booking. Pick your favorite barber, select your service, and arrive without the wait.
               </p>
             </div>
-            <div className="md:text-right">
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <Button
                 asChild
-                variant="secondary"
                 size="lg"
-                className="transition-all duration-200 hover:scale-[1.02] motion-reduce:hover:scale-100"
+                className="rounded-full bg-white text-black dark:bg-black dark:text-white font-extrabold text-xs tracking-[0.2em] uppercase px-8 h-14 shadow-xl hover:scale-105 transition-all"
               >
-                <Link to="/book">
-                  Book now <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to="/book" className="flex items-center gap-2">
+                  BOOK NOW <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
                 </Link>
               </Button>
+              
+              {shop.data?.shop_phone && (
+                <a
+                  href={`tel:${shop.data.shop_phone}`}
+                  className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider underline hover:opacity-80 transition-opacity px-4 py-3"
+                >
+                  <Phone className="h-4 w-4" /> {shop.data.shop_phone}
+                </a>
+              )}
             </div>
-          </CardContent>
-        </Card>
-        {shop.data?.shop_phone && (
-          <p className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Phone className="h-4 w-4" /> Or call us at {shop.data.shop_phone}
-          </p>
-        )}
+          </div>
+        </div>
       </section>
     </SiteLayout>
   );
