@@ -1,0 +1,128 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export type Service = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  price: number;
+  duration_minutes: number;
+};
+
+export type Barber = {
+  id: string;
+  name: string;
+  specialization: string | null;
+  experience_years: number | null;
+  bio: string | null;
+  rating: number | null;
+  avatar_url: string | null;
+};
+
+export async function fetchServices(): Promise<Service[]> {
+  const { data, error } = await supabase
+    .from("services")
+    .select("id,name,description,category,price,duration_minutes")
+    .eq("is_active", true)
+    .order("category", { ascending: true })
+    .order("price", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Service[];
+}
+
+export async function fetchBarbers(): Promise<Barber[]> {
+  const { data, error } = await supabase
+    .from("barbers")
+    .select("id,name,specialization,experience_years,bio,rating,avatar_url")
+    .eq("is_active", true)
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as Barber[];
+}
+
+export async function fetchBarberPortfolio(barberId: string) {
+  const { data, error } = await supabase
+    .from("barber_portfolio")
+    .select("id,image_url,caption")
+    .eq("barber_id", barberId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchShopSettings() {
+  const { data, error } = await supabase
+    .from("shop_settings")
+    .select("*")
+    .order("id")
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchAvailableSlots(
+  barberId: string,
+  date: string,
+  durationMinutes: number,
+): Promise<string[]> {
+  const { data, error } = await supabase.rpc("get_available_slots", {
+    p_barber_id: barberId,
+    p_date: date,
+    p_duration_minutes: durationMinutes,
+  });
+  if (error) throw error;
+  // RPC returns array of time strings like "09:00:00"
+  return ((data ?? []) as string[]).map((t) => t.slice(0, 5));
+}
+
+export async function createBooking(payload: {
+  service_id: string;
+  barber_id: string | null;
+  booking_date: string;
+  start_time: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string;
+  notes?: string;
+}) {
+  const { data, error } = await supabase.rpc("public_booking_create", {
+    p_service_id: payload.service_id,
+    p_barber_id: payload.barber_id as unknown as string,
+    p_booking_date: payload.booking_date,
+    p_start_time: payload.start_time,
+    p_customer_name: payload.customer_name,
+    p_customer_phone: payload.customer_phone,
+    p_customer_email: payload.customer_email ?? "",
+    p_notes: (payload.notes ?? undefined) as string | undefined,
+  });
+  if (error) throw error;
+  return data as {
+    id: string;
+    reference: string;
+    barber_id: string;
+    booking_date: string;
+    start_time: string;
+    price: number;
+    status: string;
+  };
+}
+
+export async function fetchMyBookings(userId: string) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id,reference,booking_date,start_time,status,price,notes,barber_id,service_id,created_at")
+    .eq("user_id", userId)
+    .order("booking_date", { ascending: false })
+    .order("start_time", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function cancelMyBooking(id: string) {
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status: "cancelled" })
+    .eq("id", id);
+  if (error) throw error;
+}

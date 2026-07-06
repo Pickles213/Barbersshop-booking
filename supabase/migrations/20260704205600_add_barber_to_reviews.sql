@@ -1,0 +1,3 @@
+ALTER TABLE public.reviews
+ADD COLUMN IF NOT EXISTS barber_id UUID REFERENCES public.barbers(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS barber_name TEXT;
