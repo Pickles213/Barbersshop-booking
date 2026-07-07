@@ -4,8 +4,8 @@ import type { Database } from './types';
 
 // Public fallback values — these are publishable (not secret) keys safe for client-side code.
 // They are used when the Lovable build environment does not inject the VITE_ vars at build time.
-const FALLBACK_URL = 'https://dxmrbqirvxxztsfdjrlz.supabase.co';
-const FALLBACK_KEY = 'sb_publishable_Ebze_vxKa61Mg6E3tqmPtw_uBbLPhdG';
+const FALLBACK_URL = 'https://hwtmkijkzgjmnpdbrnuy.supabase.co';
+const FALLBACK_KEY = 'sb_publishable_dW8cXuASsDr3V-mXgTLHGA_IVvU296Q';
 
 function createSupabaseClient(): SupabaseClient<Database> {
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || FALLBACK_URL;

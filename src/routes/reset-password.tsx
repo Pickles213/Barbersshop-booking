@@ -45,9 +45,15 @@ function ResetPasswordPage() {
     }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+    
+    // Clear the temporary recovery session so they must log in manually with the new password
+    await supabase.auth.signOut();
     setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Password updated — you're signed in.");
+    toast.success("Password updated successfully. Please log in.");
     navigate({ to: "/auth" });
   };
 
