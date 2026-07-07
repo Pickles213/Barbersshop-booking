@@ -267,8 +267,6 @@ export type Database = {
       }
       reviews: {
         Row: {
-          barber_id: string | null
-          barber_name: string | null
           booking_id: string | null
           comment: string | null
           created_at: string
@@ -276,10 +274,9 @@ export type Database = {
           id: string
           rating: number
           service_name: string
+          updated_at: string
         }
         Insert: {
-          barber_id?: string | null
-          barber_name?: string | null
           booking_id?: string | null
           comment?: string | null
           created_at?: string
@@ -287,10 +284,9 @@ export type Database = {
           id?: string
           rating: number
           service_name: string
+          updated_at?: string
         }
         Update: {
-          barber_id?: string | null
-          barber_name?: string | null
           booking_id?: string | null
           comment?: string | null
           created_at?: string
@@ -298,15 +294,9 @@ export type Database = {
           id?: string
           rating?: number
           service_name?: string
+          updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "reviews_barber_id_fkey"
-            columns: ["barber_id"]
-            isOneToOne: false
-            referencedRelation: "barbers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]

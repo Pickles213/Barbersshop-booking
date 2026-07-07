@@ -24,8 +24,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       booking_id: string | null;
       customer_name: string;
       service_name: string;
-      barber_id: string | null;
-      barber_name: string | null;
       rating: number;
       comment: string;
     }) => {
@@ -260,8 +258,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                   booking_id: pendingReview?.id || null,
                   customer_name: pendingReview?.customer_name || "Customer",
                   service_name: pendingReview?.service_name || "Service",
-                  barber_id: pendingReview?.barber_id || null,
-                  barber_name: pendingReview?.barber_name || null,
                   rating: reviewRating,
                   comment: reviewComment,
                 });
