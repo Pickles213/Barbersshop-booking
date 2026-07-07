@@ -37,7 +37,31 @@ export async function fetchBarbers(): Promise<Barber[]> {
     .eq("is_active", true)
     .order("name");
   if (error) throw error;
-  return (data ?? []) as Barber[];
+  const barbers = (data ?? []) as Barber[];
+
+  // Compute live average rating from reviews joined to bookings (source of truth for barber_id).
+  const { data: reviewRows } = await supabase
+    .from("reviews")
+    .select("rating, booking:bookings(barber_id)");
+
+  if (reviewRows && reviewRows.length > 0) {
+    const sums = new Map<string, { total: number; count: number }>();
+    for (const r of reviewRows as any[]) {
+      const bid = r?.booking?.barber_id;
+      if (!bid || typeof r.rating !== "number") continue;
+      const entry = sums.get(bid) ?? { total: 0, count: 0 };
+      entry.total += r.rating;
+      entry.count += 1;
+      sums.set(bid, entry);
+    }
+    return barbers.map((b) => {
+      const entry = sums.get(b.id);
+      return entry && entry.count > 0
+        ? { ...b, rating: Math.round((entry.total / entry.count) * 10) / 10 }
+        : b;
+    });
+  }
+  return barbers;
 }
 
 export async function fetchBarberPortfolio(barberId: string) {
