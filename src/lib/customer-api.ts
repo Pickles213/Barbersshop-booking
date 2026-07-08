@@ -101,7 +101,7 @@ export async function fetchAvailableSlots(
 }
 
 export async function createBooking(payload: {
-  service_id: string;
+  service_ids: string[];
   barber_id: string | null;
   booking_date: string;
   start_time: string;
@@ -111,7 +111,7 @@ export async function createBooking(payload: {
   notes?: string;
 }) {
   const { data, error } = await supabase.rpc("public_booking_create", {
-    p_service_id: payload.service_id,
+    p_service_ids: payload.service_ids,
     p_barber_id: payload.barber_id as unknown as string,
     p_booking_date: payload.booking_date,
     p_start_time: payload.start_time,
@@ -132,21 +132,51 @@ export async function createBooking(payload: {
   };
 }
 
-export async function fetchMyBookings(userId: string) {
+export type BookingServiceLine = {
+  id: string;
+  service_id: string | null;
+  service_name: string;
+  price: number;
+  duration_minutes: number;
+};
+
+export async function fetchBookingServices(bookingId: string): Promise<BookingServiceLine[]> {
+  const { data, error } = await supabase
+    .from("booking_services")
+    .select("id,service_id,service_name,price,duration_minutes")
+    .eq("booking_id", bookingId);
+  if (error) throw error;
+  return (data ?? []) as BookingServiceLine[];
+}
+
+export type MyBooking = {
+  id: string;
+  reference: string;
+  booking_date: string;
+  start_time: string;
+  status: string;
+  price: number;
+  notes: string | null;
+  barber_id: string | null;
+  service_id: string | null;
+  created_at: string;
+  booking_services: BookingServiceLine[];
+};
+
+export async function fetchMyBookings(userId: string): Promise<MyBooking[]> {
   const { data, error } = await supabase
     .from("bookings")
-    .select("id,reference,booking_date,start_time,status,price,notes,barber_id,service_id,created_at")
+    .select(
+      "id,reference,booking_date,start_time,status,price,notes,barber_id,service_id,created_at,booking_services(id,service_id,service_name,price,duration_minutes)",
+    )
     .eq("user_id", userId)
     .order("booking_date", { ascending: false })
     .order("start_time", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as MyBooking[];
 }
 
 export async function cancelMyBooking(id: string) {
-  const { error } = await supabase
-    .from("bookings")
-    .update({ status: "cancelled" })
-    .eq("id", id);
+  const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
   if (error) throw error;
 }

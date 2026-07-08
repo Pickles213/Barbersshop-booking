@@ -41,6 +41,7 @@ export function ServicesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
   const [form, setForm] = useState(empty);
+  const [customCategory, setCustomCategory] = useState("");
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["services"],
@@ -51,13 +52,33 @@ export function ServicesPage() {
     },
   });
 
+  const categoriesList = Array.from(
+    new Set([
+      "Haircut",
+      "Beard",
+      "Shave",
+      "Combo",
+      ...services.map((s) => s.category).filter(Boolean),
+    ])
+  );
+
   const upsert = useMutation({
     mutationFn: async () => {
+      const finalCategory = form.category === "custom-new" ? customCategory.trim() : form.category;
+      if (!finalCategory) {
+        throw new Error("Please enter a category name");
+      }
+      
+      const payload = {
+        ...form,
+        category: finalCategory,
+      };
+
       if (editing) {
-        const { error } = await supabase.from("services").update(form).eq("id", editing.id);
+        const { error } = await supabase.from("services").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("services").insert(form);
+        const { error } = await supabase.from("services").insert(payload);
         if (error) throw error;
       }
     },
@@ -66,6 +87,7 @@ export function ServicesPage() {
       setOpen(false);
       setEditing(null);
       setForm(empty);
+      setCustomCategory("");
       qc.invalidateQueries({ queryKey: ["services"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -97,9 +119,15 @@ export function ServicesPage() {
       name: s.name, description: s.description ?? "", category: s.category,
       price: s.price, duration_minutes: s.duration_minutes, is_active: s.is_active,
     });
+    setCustomCategory("");
     setOpen(true);
   };
-  const startNew = () => { setEditing(null); setForm(empty); setOpen(true); };
+  const startNew = () => { 
+    setEditing(null); 
+    setForm(empty); 
+    setCustomCategory("");
+    setOpen(true); 
+  };
 
   const filtered = services.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -133,9 +161,10 @@ export function ServicesPage() {
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {["Haircut", "Beard", "Shave", "Combo", "Other"].map((c) => (
+                        {categoriesList.map((c) => (
                           <SelectItem key={c} value={c}>{c}</SelectItem>
                         ))}
+                        <SelectItem value="custom-new">+ Add new category...</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -148,6 +177,30 @@ export function ServicesPage() {
                     <Input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 0 })} />
                   </div>
                 </div>
+
+                {form.category === "custom-new" && (
+                  <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <Label>Custom Category Name</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="e.g. Nail Care, Hair Color" 
+                        value={customCategory} 
+                        onChange={(e) => setCustomCategory(e.target.value)} 
+                        autoFocus
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => {
+                          setForm({ ...form, category: "Haircut" });
+                          setCustomCategory("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 pt-2">
                   <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                   <Label>Active</Label>
