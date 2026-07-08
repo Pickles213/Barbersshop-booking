@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Search, Trash2, Star } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, Star, Receipt } from "lucide-react";
+import { BookingReceiptDialog } from "./booking-receipt-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,8 @@ export function BookingsPage() {
   const [dateTo, setDateTo] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Booking | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<Booking | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState({
     customer_name: "", customer_phone: "", barber_id: "", service_id: "",
@@ -57,7 +60,7 @@ export function BookingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("*, barber:barbers(name), service:services(name, price)")
+        .select("*, barber:barbers(name), service:services(name, price), booking_services(*)")
         .order("booking_date", { ascending: false })
         .order("start_time", { ascending: true });
       if (error) throw error;
@@ -283,6 +286,7 @@ export function BookingsPage() {
                   </TableCell>
                   <TableCell>₱{Number(b.price).toLocaleString()}</TableCell>
                   <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => { setSelectedReceipt(b); setReceiptOpen(true); }} title="View Receipt"><Receipt className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => startEdit(b)}><Pencil className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete?")) remove.mutate(b.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
@@ -292,6 +296,11 @@ export function BookingsPage() {
           </Table>
         </CardContent>
       </Card>
+      <BookingReceiptDialog 
+        isOpen={receiptOpen} 
+        onOpenChange={setReceiptOpen} 
+        booking={selectedReceipt} 
+      />
     </div>
   );
 }

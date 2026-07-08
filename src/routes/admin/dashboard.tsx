@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarCheck2, CalendarDays, Footprints, Wallet } from "lucide-react";
+import { CalendarCheck2, CalendarDays, Footprints, Wallet, Receipt } from "lucide-react";
+import { useState } from "react";
 
 import { DashboardHeader } from "@/components/admin/dashboard-header";
 import { BookingStatusBadge } from "@/components/admin/booking-status-badge";
@@ -9,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPHP } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { BookingReceiptDialog } from "@/components/admin/booking-receipt-dialog";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
@@ -42,10 +45,13 @@ function formatWhen(date: string, time?: string | null) {
 
 function DashboardPage() {
   const today = new Date().toISOString().slice(0, 10);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+
   const { data: bookings = [] } = useQuery({
     queryKey: ["dashboard-bookings"],
     queryFn: async () =>
-      (await supabase.from("bookings").select("*, barber:barbers(name), service:services(name)").order("booking_date", { ascending: false }).order("start_time", { ascending: true })).data ?? [],
+      (await supabase.from("bookings").select("*, barber:barbers(name), service:services(name), booking_services(*)").order("booking_date", { ascending: false }).order("start_time", { ascending: true })).data ?? [],
   });
   const { data: walkins = [] } = useQuery({
     queryKey: ["dashboard-walkins"],
@@ -119,12 +125,13 @@ function DashboardPage() {
                     <TableHead>When</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="w-16 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
                         {emptyLabel}
                       </TableCell>
                     </TableRow>
@@ -150,6 +157,11 @@ function DashboardPage() {
                         <BookingStatusBadge status={b.status} />
                       </TableCell>
                       <TableCell className="text-right font-medium">{formatPHP(Number(b.price))}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="icon" variant="ghost" onClick={() => { setSelectedReceipt(b); setReceiptOpen(true); }} className="h-7 w-7" title="View Receipt">
+                          <Receipt className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -158,6 +170,11 @@ function DashboardPage() {
           </CardContent>
         </Card>
       ))}
+      <BookingReceiptDialog 
+        isOpen={receiptOpen} 
+        onOpenChange={setReceiptOpen} 
+        booking={selectedReceipt} 
+      />
     </div>
   );
 }
