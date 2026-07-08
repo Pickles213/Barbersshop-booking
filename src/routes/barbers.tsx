@@ -241,31 +241,7 @@ function BarbersPage() {
   );
 }
 
-function getBarberInterests(name: string) {
-  const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const pool = [
-    { emoji: "🍺", text: "Beer" },
-    { emoji: "☕", text: "Coffee" },
-    { emoji: "🎮", text: "Gaming" },
-    { emoji: "🎵", text: "Music" },
-    { emoji: "⚽", text: "Sports" },
-    { emoji: "✈️", text: "Travel" },
-    { emoji: "📚", text: "Books" },
-    { emoji: "🎬", text: "Movies" },
-    { emoji: "🎨", text: "Art" },
-    { emoji: "🧗", text: "Outdoors" }
-  ];
-  return [
-    pool[hash % pool.length],
-    pool[(hash + 3) % pool.length],
-    pool[(hash + 7) % pool.length]
-  ];
-}
 
-function getBarberLanguages(name: string) {
-  const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return hash % 2 === 0 ? ["English", "Tagalog"] : ["English", "Tagalog", "Spanish"];
-}
 
 function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: () => void }) {
   const portfolio = useQuery({
@@ -312,8 +288,6 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
 
   const completed = (completedCount.data || 0) + (barber.experience_years ? barber.experience_years * 140 : 0) + 85;
   const clients = Math.round(completed * 0.9);
-  const interests = getBarberInterests(barber.name);
-  const languages = getBarberLanguages(barber.name);
 
   return (
     <Dialog open={!!barber} onOpenChange={(o) => !o && onClose()}>
@@ -391,36 +365,6 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
                 <div className="p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800/80">
                   <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">Clients served</span>
                   <span className="text-xl font-mono font-bold block mt-1">{clients}</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">About</span>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 font-light leading-relaxed">
-                  {barber.bio || `${barber.name} is a dedicated master cut craftsman bringing precision and classic style to every single client.`}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">Languages</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {languages.map((lang) => (
-                    <span key={lang} className="text-[11px] px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 font-medium">
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">Interests</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {interests.map((int) => (
-                    <span key={int.text} className="text-[11px] px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 font-medium flex items-center gap-1">
-                      <span>{int.emoji}</span>
-                      <span>{int.text}</span>
-                    </span>
-                  ))}
                 </div>
               </div>
             </TabsContent>
