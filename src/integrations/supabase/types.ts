@@ -190,51 +190,6 @@ export type Database = {
           },
         ]
       }
-      booking_services: {
-        Row: {
-          booking_id: string
-          created_at: string
-          duration_minutes: number
-          id: string
-          price: number
-          service_id: string | null
-          service_name: string
-        }
-        Insert: {
-          booking_id: string
-          created_at?: string
-          duration_minutes?: number
-          id?: string
-          price?: number
-          service_id?: string | null
-          service_name: string
-        }
-        Update: {
-          booking_id?: string
-          created_at?: string
-          duration_minutes?: number
-          id?: string
-          price?: number
-          service_id?: string | null
-          service_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_services_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_services_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       holidays: {
         Row: {
           created_at: string
@@ -312,8 +267,6 @@ export type Database = {
       }
       reviews: {
         Row: {
-          barber_id: string | null
-          barber_name: string | null
           booking_id: string | null
           comment: string | null
           created_at: string
@@ -324,8 +277,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          barber_id?: string | null
-          barber_name?: string | null
           booking_id?: string | null
           comment?: string | null
           created_at?: string
@@ -336,8 +287,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          barber_id?: string | null
-          barber_name?: string | null
           booking_id?: string | null
           comment?: string | null
           created_at?: string
@@ -348,13 +297,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "reviews_barber_id_fkey"
-            columns: ["barber_id"]
-            isOneToOne: false
-            referencedRelation: "barbers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]
@@ -699,7 +641,7 @@ export type Database = {
           p_customer_name: string
           p_customer_phone: string
           p_notes?: string
-          p_service_ids: string[]
+          p_service_id: string
           p_start_time: string
         }
         Returns: {
