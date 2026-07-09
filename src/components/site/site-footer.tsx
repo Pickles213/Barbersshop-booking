@@ -75,11 +75,6 @@ export function SiteFooter() {
             </h3>
             <ul className="space-y-3 text-xs font-bold tracking-[0.15em] text-zinc-300 uppercase">
               <li>
-                <Link to="/auth" className="hover:text-white transition-colors">
-                  Staff Sign In ↗
-                </Link>
-              </li>
-              <li>
                 <Link to="/admin/dashboard" className="hover:text-white transition-colors">
                   Admin Dashboard ↗
                 </Link>
