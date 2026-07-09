@@ -1,11 +1,11 @@
-import { Bell, Moon, Search, Sun } from "lucide-react";
+import { Bell, Moon, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { formatTime } from "@/lib/utils";
+import type { User } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -97,13 +97,25 @@ function toNotif(row: AuditRow): Notif | null {
   return null;
 }
 
+const THEME_KEY = "southside_theme";
+
 export function AdminTopbar() {
   const [isDark, setIsDark] = useState(false);
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+  const [user, setUser] = useState<User | null>(null);
 
+  // Load persisted theme on mount
   useEffect(() => {
     if (typeof document === "undefined") return;
-    setIsDark(document.documentElement.classList.contains("dark"));
+    const saved = localStorage.getItem(THEME_KEY);
+    const dark = saved === "dark" || (!saved && document.documentElement.classList.contains("dark"));
+    document.documentElement.classList.toggle("dark", dark);
+    setIsDark(dark);
+  }, []);
+
+  // Fetch current logged-in user for avatar initials
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
   }, []);
 
   useEffect(() => {
@@ -152,6 +164,7 @@ export function AdminTopbar() {
   const toggleTheme = () => {
     const next = !isDark;
     document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem(THEME_KEY, next ? "dark" : "light");
     setIsDark(next);
   };
 
@@ -159,11 +172,6 @@ export function AdminTopbar() {
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur sm:px-4">
       <SidebarTrigger className="shrink-0" />
       <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
-
-      <div className="relative hidden flex-1 max-w-md md:block">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search bookings, customers, barbers…" className="pl-8" />
-      </div>
 
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
@@ -214,7 +222,9 @@ export function AdminTopbar() {
           </DropdownMenuContent>
         </DropdownMenu>
         <Avatar className="ml-1 h-8 w-8">
-          <AvatarFallback>AD</AvatarFallback>
+          <AvatarFallback>
+            {user?.email ? user.email.slice(0, 2).toUpperCase() : "AD"}
+          </AvatarFallback>
         </Avatar>
       </div>
     </header>
