@@ -185,7 +185,7 @@ function HomePage() {
                 ) : null
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              
+
               <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white z-10">
                 <div>
                   <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-300">
@@ -286,13 +286,13 @@ function HomePage() {
             <div className="lg:col-span-5">
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
                 <img
-                  src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80"
+                  src="/images/img1.jpg"
                   alt="Barbershop Interior"
                   className="w-full h-full object-cover filter contrast-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
-                  [ SOUTHSIDE STUDIO · MAKATI ]
+                  [ SOUTHSIDE BARBERS · CAVITE ]
                 </div>
               </div>
             </div>
@@ -322,12 +322,16 @@ function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left · Image */}
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=80"
+                  src="/images/img3.jpg"
                   alt="Barber Precision Cut"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-2xl"
                 />
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
+                  [ SOUTHSIDE BARBERS · CAVITE ]
+                </div>
               </div>
             </div>
 
@@ -457,12 +461,16 @@ function HomePage() {
 
             {/* Right Col · Accompanying Photo */}
             <div className="lg:col-span-4 sticky top-28">
-              <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
                 <img
-                  src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&q=80"
+                  src="/images/img2.jpg"
                   alt="Barbershop Service"
-                  className="w-full h-full object-cover filter contrast-105"
+                  className="w-full h-full object-cover rounded-2xl contrast-[1.05]"
                 />
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
+                  [ SOUTHSIDE BARBERS · CAVITE ]
+                </div>
               </div>
             </div>
           </div>
@@ -509,7 +517,7 @@ function HomePage() {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter contrast-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-                  
+
                   <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
                     <div>
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-400">
@@ -628,7 +636,7 @@ function HomePage() {
                   BOOK NOW <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
                 </Link>
               </Button>
-              
+
               {shop.data?.shop_phone && (
                 <a
                   href={`tel:${shop.data.shop_phone}`}
