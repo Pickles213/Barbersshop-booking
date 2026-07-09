@@ -47,7 +47,7 @@ export function BookingsPage() {
   const [editing, setEditing] = useState<Booking | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Booking | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("sv-SE");
   const [form, setForm] = useState({
     customer_name: "", customer_phone: "", barber_id: "", service_id: "",
     booking_date: today, start_time: "10:00", status: "pending" as Status, price: 0,

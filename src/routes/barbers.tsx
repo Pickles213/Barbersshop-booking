@@ -301,44 +301,21 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
   const reviews = useQuery({
     queryKey: ["reviews", barber?.id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("reviews")
-        .select("*, bookings!inner(barber_id)")
-        .eq("bookings.barber_id", barber!.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .rpc("get_barber_reviews", { p_barber_id: barber!.id });
       if (error) throw error;
       return data || [];
     },
     enabled: !!barber,
   });
 
-  const completedCount = useQuery({
-    queryKey: ["completed-count", barber?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("bookings")
-        .select("*", { count: "exact", head: true })
-        .eq("barber_id", barber!.id)
-        .eq("status", "completed");
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!barber,
-  });
-
-  const clientsCount = useQuery({
-    queryKey: ["clients-count", barber?.id],
+  const stats = useQuery({
+    queryKey: ["barber-stats", barber?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bookings")
-        .select("customer_phone, customer_name, user_id")
-        .eq("barber_id", barber!.id)
-        .eq("status", "completed");
+        .rpc("get_barber_stats", { p_barber_id: barber!.id });
       if (error) throw error;
-      const uniqueClients = new Set(
-        (data || []).map((b: any) => b.customer_phone || b.user_id || b.customer_name)
-      );
-      return uniqueClients.size;
+      return data?.[0] ?? { appointments_completed: 0, clients_served: 0 };
     },
     enabled: !!barber,
   });
@@ -371,8 +348,8 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
 
   if (!barber) return null;
 
-  const completed = completedCount.data || 0;
-  const clients = clientsCount.data || 0;
+  const completed = stats.data?.appointments_completed || 0;
+  const clients = stats.data?.clients_served || 0;
 
 
   return (

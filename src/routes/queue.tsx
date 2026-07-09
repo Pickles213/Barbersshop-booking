@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Radio, Clock, Scissors, LogIn, ArrowUpRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { SiteLayout } from "@/components/site/site-layout";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +42,6 @@ type MyTicket = {
 function QueuePage() {
   const qc = useQueryClient();
   const [me, setMe] = useState<{ id: string } | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -70,12 +68,10 @@ function QueuePage() {
     queryKey: ["my_ticket", me?.id],
     enabled: !!me,
     queryFn: async () => {
-      const iso = new Date().toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("walk_ins")
         .select("id, queue_number, status, service_id, created_at")
         .eq("user_id", me!.id)
-        .gte("created_at", `${iso}T00:00:00Z`)
         .in("status", ["waiting", "in_progress"])
         .order("created_at", { ascending: false })
         .limit(1)
@@ -168,16 +164,6 @@ function QueuePage() {
     }
   }
 
-  const handleGoogle = async () => {
-    setGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/queue`,
-    });
-    if (result.error) {
-      setGoogleLoading(false);
-      toast.error(result.error.message ?? "Google sign-in failed");
-    }
-  };
 
   return (
     <SiteLayout>
@@ -356,21 +342,22 @@ function QueuePage() {
                   WANT TO TRACK YOUR WALK-IN TICKET?
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 font-light leading-relaxed">
-                  If you checked in at the shop with your email, sign in with your Google account below to monitor your line position and countdown timer from anywhere.
+                  If you checked in at the shop, sign in to your account to monitor your line position and countdown timer from anywhere.
                 </p>
               </div>
 
               <Button
-                onClick={handleGoogle}
-                disabled={googleLoading}
+                asChild
                 size="lg"
                 className={cn(
                   "rounded-full bg-black text-white dark:bg-white dark:text-black font-extrabold text-xs tracking-[0.2em] uppercase px-8 h-13 shadow-xl",
                   "hover:bg-zinc-800 dark:hover:bg-zinc-200 hover:scale-105 active:scale-95 transition-all"
                 )}
               >
-                <LogIn className="mr-2 h-4 w-4" />
-                {googleLoading ? "CONNECTING TO GOOGLE..." : "SIGN IN WITH GOOGLE"} <ArrowUpRight className="ml-1 h-4 w-4 stroke-[2.5]" />
+                <Link to="/auth" search={{ redirect: "/queue" }}>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  SIGN IN TO TRACK <ArrowUpRight className="ml-1 h-4 w-4 stroke-[2.5]" />
+                </Link>
               </Button>
             </div>
           )}
