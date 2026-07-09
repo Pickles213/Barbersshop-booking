@@ -37,31 +37,10 @@ export async function fetchBarbers(): Promise<Barber[]> {
     .eq("is_active", true)
     .order("name");
   if (error) throw error;
-  const barbers = (data ?? []) as Barber[];
-
-  // Compute live average rating from reviews (barber_id directly or fallback to bookings relation).
-  const { data: reviewRows } = await supabase
-    .from("reviews")
-    .select("rating, barber_id, booking:bookings(barber_id)");
-
-  if (reviewRows && reviewRows.length > 0) {
-    const sums = new Map<string, { total: number; count: number }>();
-    for (const r of reviewRows as any[]) {
-      const bid = r?.barber_id || r?.booking?.barber_id;
-      if (!bid || typeof r.rating !== "number") continue;
-      const entry = sums.get(bid) ?? { total: 0, count: 0 };
-      entry.total += r.rating;
-      entry.count += 1;
-      sums.set(bid, entry);
-    }
-    return barbers.map((b) => {
-      const entry = sums.get(b.id);
-      return entry && entry.count > 0
-        ? { ...b, rating: Math.round((entry.total / entry.count) * 10) / 10 }
-        : b;
-    });
-  }
-  return barbers;
+  // Use the trigger-maintained `barbers.rating` column (global average).
+  // Recomputing on the client is unsafe under RLS: embedded joins to `bookings`
+  // only return rows owned by the current user, which would personalize the rating.
+  return (data ?? []) as Barber[];
 }
 
 export async function fetchBarberPortfolio(barberId: string) {
