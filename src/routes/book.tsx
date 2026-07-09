@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, cn } from "@/lib/utils";
+import { formatDuration } from "@/lib/format-duration";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -106,6 +107,49 @@ function BookPage() {
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
 
+  // Fetch categories linked to the selected barber (if any)
+  const { data: barberCategories = [] } = useQuery({
+    queryKey: ["barber-categories-ids", barberId],
+    queryFn: async () => {
+      try {
+        if (!barberId || barberId === ANY_BARBER) return [];
+        const { data, error } = await supabase
+          .from("barber_categories")
+          .select("category")
+          .eq("barber_id", barberId);
+        if (error) {
+          console.warn("[Supabase] Failed to fetch barber categories:", error);
+          return [];
+        }
+        return data.map((d) => d.category);
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+    enabled: !!barberId && barberId !== ANY_BARBER,
+  });
+
+  // Fetch all barber categories mapping for filtering barbers
+  const { data: allBarberCategories = [] } = useQuery({
+    queryKey: ["all-barber-categories"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("barber_categories")
+          .select("barber_id, category");
+        if (error) {
+          console.warn("[Supabase] Failed to fetch all barber categories:", error);
+          return [];
+        }
+        return data || [];
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+  });
+
   // Selected services, kept in the order the customer picked them.
   const selectedServices = useMemo(() => {
     const byId = new Map((services.data ?? []).map((s) => [s.id, s]));
@@ -126,13 +170,39 @@ function BookPage() {
     (services.data ?? []).forEach((s) => {
       if (s.category) set.add(s.category);
     });
-    return ["All", ...Array.from(set)];
+    const sorted = Array.from(set).sort((a, b) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+    return ["All", ...sorted];
   }, [services.data]);
 
   const visibleServices = useMemo(() => {
-    if (activeCategory === "All") return services.data ?? [];
-    return (services.data ?? []).filter((s) => s.category === activeCategory);
-  }, [services.data, activeCategory]);
+    let list = services.data ?? [];
+    if (barberId && barberId !== ANY_BARBER) {
+      list = list.filter((s) => s.category && barberCategories.includes(s.category));
+    }
+    if (activeCategory === "All") return list;
+    return list.filter((s) => s.category === activeCategory);
+  }, [services.data, activeCategory, barberId, barberCategories]);
+
+  const visibleBarbers = useMemo(() => {
+    const list = barbers.data ?? [];
+    if (serviceIds.length === 0 || !allBarberCategories.length) return list;
+
+    const selectedServicesList = services.data ?? [];
+    const selectedCats = serviceIds
+      .map((sId) => selectedServicesList.find((s) => s.id === sId)?.category)
+      .filter((cat): cat is string => !!cat);
+
+    return list.filter((b) => {
+      const offeredCats = allBarberCategories
+        .filter((abc: any) => abc.barber_id === b.id)
+        .map((abc: any) => abc.category);
+      return selectedCats.every((cat) => offeredCats.includes(cat));
+    });
+  }, [barbers.data, serviceIds, services.data, allBarberCategories]);
 
   const toggleService = (id: string) => {
     setServiceIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -379,7 +449,7 @@ function BookPage() {
                                 {s.name}
                               </p>
                               <p className="text-xs text-zinc-400 font-mono">
-                                {s.duration_minutes} min
+                                {formatDuration(s.duration_minutes)}
                               </p>
                             </div>
                             <span className="text-sm font-black text-black dark:text-white shrink-0">
@@ -434,7 +504,7 @@ function BookPage() {
 
                 {/* Specific Barbers */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(barbers.data ?? []).map((b) => (
+                  {visibleBarbers.map((b) => (
                     <BarberRow
                       key={b.id}
                       b={b}
@@ -856,7 +926,7 @@ function BookPage() {
                       <div className="flex items-start gap-2.5">
                         <Clock className="h-4 w-4 text-zinc-400 shrink-0" />
                         <span className="font-bold text-black dark:text-white">
-                          {formatTime(slot!)} ({totalDuration} min duration)
+                          {formatTime(slot!)} ({formatDuration(totalDuration)})
                         </span>
                       </div>
                       <div className="flex items-start gap-2.5">
@@ -1077,7 +1147,7 @@ function ServiceRow({
       <div className="flex items-center justify-between sm:justify-end gap-6 pl-12 sm:pl-0 font-mono text-xs">
         {s.duration_minutes && (
           <span className="text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" /> {s.duration_minutes} MIN
+            <Clock className="h-3.5 w-3.5" /> {formatDuration(s.duration_minutes).toUpperCase()}
           </span>
         )}
         <div className="flex items-baseline gap-1">
@@ -1271,7 +1341,7 @@ function Summary({
           <div className="flex justify-between items-baseline gap-4">
             <span className="font-mono text-xs text-zinc-400 uppercase tracking-wider">TIME</span>
             <span className="font-mono font-black uppercase text-right text-emerald-600 dark:text-emerald-400">
-              {formatTime(slot)} ({totalDuration} min)
+              {formatTime(slot)} ({formatDuration(totalDuration)})
             </span>
           </div>
         )}

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Star, Image as ImageIcon, Award, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
+import { formatDuration } from "@/lib/format-duration";
 
 import { SiteLayout } from "@/components/site/site-layout";
 import { Button } from "@/components/ui/button";
@@ -325,16 +326,53 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
     enabled: !!barber,
   });
 
+  const clientsCount = useQuery({
+    queryKey: ["clients-count", barber?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("customer_phone, customer_name, user_id")
+        .eq("barber_id", barber!.id)
+        .eq("status", "completed");
+      if (error) throw error;
+      const uniqueClients = new Set(
+        (data || []).map((b: any) => b.customer_phone || b.user_id || b.customer_name)
+      );
+      return uniqueClients.size;
+    },
+    enabled: !!barber,
+  });
+
   const services = useQuery({
-    queryKey: ["services"],
-    queryFn: fetchServices,
+    queryKey: ["barber-services", barber?.id],
+    queryFn: async () => {
+      try {
+        const { data: bcData, error: bcError } = await supabase
+          .from("barber_categories")
+          .select("category")
+          .eq("barber_id", barber!.id);
+        if (bcError) throw bcError;
+        const barberCats = (bcData || []).map((d: any) => d.category);
+
+        const { data: sData, error: sError } = await supabase
+          .from("services")
+          .select("*")
+          .eq("is_active", true);
+        if (sError) throw sError;
+
+        return (sData || []).filter((s: any) => barberCats.includes(s.category));
+      } catch (e) {
+        console.error("[Supabase] Error fetching barber services:", e);
+        return [];
+      }
+    },
     enabled: !!barber,
   });
 
   if (!barber) return null;
 
-  const completed = (completedCount.data || 0) + (barber.experience_years ? barber.experience_years * 140 : 0) + 85;
-  const clients = Math.round(completed * 0.9);
+  const completed = completedCount.data || 0;
+  const clients = clientsCount.data || 0;
 
 
   return (
@@ -468,7 +506,7 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
                     >
                       <div className="min-w-0">
                         <h4 className="font-bold text-xs uppercase tracking-tight text-black dark:text-white truncate">{s.name}</h4>
-                        <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{s.duration_minutes} min</p>
+                        <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{formatDuration(s.duration_minutes)}</p>
                         <p className="text-xs font-black mt-1">₱{Number(s.price).toLocaleString()}</p>
                       </div>
                       <Button 

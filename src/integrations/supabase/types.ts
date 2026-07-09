@@ -88,6 +88,35 @@ export type Database = {
           },
         ]
       }
+      barber_categories: {
+        Row: {
+          barber_id: string
+          category: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          barber_id: string
+          category: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          barber_id?: string
+          category?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_categories_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barbers: {
         Row: {
           avatar_url: string | null

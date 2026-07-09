@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Star, Trash2, ImagePlus, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 type Barber = {
   id: string; name: string; specialization: string | null; experience_years: number;
@@ -57,9 +59,54 @@ export function BarbersPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [portfolioOf, setPortfolioOf] = useState<Barber | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [portfolioUploading, setPortfolioUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["services-raw"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("services").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const categories = useMemo(() => {
+    const raw = Array.from(
+      new Set([
+        "Haircut",
+        "Beard",
+        "Shave",
+        "Combo",
+        "Other",
+        ...(services || []).map((s: any) => s.category).filter(Boolean),
+      ])
+    );
+    return raw.sort((a, b) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+  }, [services]);
+
+  const { data: barberCategories = [] } = useQuery({
+    queryKey: ["barber-categories"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from("barber_categories").select("*");
+        if (error) {
+          console.warn("[Supabase] barber_categories table might not exist yet:", error);
+          return [];
+        }
+        return data || [];
+      } catch (e) {
+        console.error("[Supabase] Failed to fetch barber_categories:", e);
+        return [];
+      }
+    },
+  });
 
   const { data: barbers = [] } = useQuery({
     queryKey: ["barbers"],
@@ -88,18 +135,40 @@ export function BarbersPage() {
       // rating is never set by the admin — it's calculated from customer reviews
       const { rating: _rating, ...rest } = form;
       const payload = { ...rest, avatar_url };
+      let barberId = editing?.id;
+
       if (editing) {
         const { error } = await supabase.from("barbers").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("barbers").insert(payload);
+        const { data, error } = await supabase.from("barbers").insert(payload).select("id").single();
         if (error) throw error;
+        barberId = data.id;
+      }
+
+      // Sync the categories in barber_categories
+      const { error: deleteError } = await supabase
+        .from("barber_categories")
+        .delete()
+        .eq("barber_id", barberId);
+      if (deleteError) throw deleteError;
+
+      if (selectedCategories.length > 0) {
+        const insertPayload = selectedCategories.map((cat) => ({
+          barber_id: barberId,
+          category: cat,
+        }));
+        const { error: insertError } = await supabase
+          .from("barber_categories")
+          .insert(insertPayload);
+        if (insertError) throw insertError;
       }
     },
     onSuccess: () => {
       toast.success(editing ? "Barber updated" : "Barber added");
-      setOpen(false); setEditing(null); setForm(empty); setAvatarFile(null); setAvatarPreview(null);
+      setOpen(false); setEditing(null); setForm(empty); setAvatarFile(null); setAvatarPreview(null); setSelectedCategories([]);
       qc.invalidateQueries({ queryKey: ["barbers"] });
+      qc.invalidateQueries({ queryKey: ["barber-categories"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -143,10 +212,17 @@ export function BarbersPage() {
     });
     setAvatarFile(null);
     setAvatarPreview(b.avatar_url ?? null);
+
+    // Set selected categories for this barber
+    const matched = barberCategories
+      .filter((bc: any) => bc.barber_id === b.id)
+      .map((bc: any) => bc.category);
+    setSelectedCategories(matched);
+
     setOpen(true);
   };
   const startNew = () => {
-    setEditing(null); setForm(empty); setAvatarFile(null); setAvatarPreview(null); setOpen(true);
+    setEditing(null); setForm(empty); setAvatarFile(null); setAvatarPreview(null); setSelectedCategories([]); setOpen(true);
   };
 
   const onAvatarChosen = (file: File | null) => {
@@ -220,6 +296,7 @@ export function BarbersPage() {
         })}
       </div>
 
+
       {/* Edit / Create dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -266,6 +343,40 @@ export function BarbersPage() {
             </div>
             <div className="space-y-1.5"><Label>Bio</Label>
               <Textarea value={form.bio ?? ""} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-baseline">
+                <Label>Services offered (Categories)</Label>
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  {selectedCategories.length} selected
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => {
+                  const isSelected = selectedCategories.includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedCategories(selectedCategories.filter((c) => c !== cat));
+                        } else {
+                          setSelectedCategories([...selectedCategories, cat]);
+                        }
+                      }}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-bold transition-all cursor-pointer select-none border border-transparent",
+                        isSelected
+                          ? "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
+                          : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex items-center gap-2"><Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /><Label>Active</Label></div>
           </div>
