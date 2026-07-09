@@ -13,12 +13,12 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Southside Barbers — Premium Barbershop Network" },
+      { title: "Southside Barbers" },
       {
         name: "description",
         content: "Precision cuts, hot-towel shaves and modern styling. Book your appointment online without unnecessary waiting.",
       },
-      { property: "og:title", content: "Southside Barbers — Premium Barbershop Network" },
+      { property: "og:title", content: "Southside Barbers" },
       {
         property: "og:description",
         content: "Precision cuts, hot-towel shaves and modern styling. Book online without unnecessary waiting.",
