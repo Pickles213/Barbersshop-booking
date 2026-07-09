@@ -141,6 +141,16 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  /* Safari date/time input fixes – prevent overflow in grid/flex layouts */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    min-width: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+  }
 }
 
 @keyframes marquee {

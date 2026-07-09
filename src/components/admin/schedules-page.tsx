@@ -319,7 +319,7 @@ export function SchedulesPage() {
         <CardContent className="space-y-4">
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Add a leave</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 overflow-hidden sm:grid-cols-2 lg:grid-cols-5">
               <div className="space-y-1 min-w-0">
                 <Label className="text-xs text-muted-foreground">Barber</Label>
                 <Select value={toForm.barber_id} onValueChange={(v) => setToForm({ ...toForm, barber_id: v })}>

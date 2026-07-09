@@ -156,7 +156,7 @@ export function BookingsPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit booking" : "New booking"}</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 overflow-hidden">
                 <div className="col-span-2 space-y-1.5 min-w-0"><Label>Customer name</Label>
                   <Input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
                 </div>
