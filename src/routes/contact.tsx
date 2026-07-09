@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, Mail, MapPin, Phone, CreditCard, Wallet, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { SiteLayout } from "@/components/site/site-layout";
@@ -12,9 +12,9 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Visit & Contact — Southside Barbers" },
-      { name: "description", content: "Shop hours, address, phone, and accepted payment methods at Southside Barbers." },
+      { name: "description", content: "Shop hours, address, and phone number at Southside Barbers." },
       { property: "og:title", content: "Visit & Contact — Southside Barbers" },
-      { property: "og:description", content: "Shop hours, address, phone, and accepted payment methods." },
+      { property: "og:description", content: "Shop hours, address, and phone number." },
     ],
   }),
   component: ContactPage,
@@ -65,8 +65,6 @@ function ContactPage() {
           <span>WALK-INS WELCOME</span>
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
           <span>HOT TOWEL SHAVES</span>
-          <span className="text-zinc-600 dark:text-zinc-400">•</span>
-          <span>CASH & GCASH ACCEPTED</span>
         </div>
       </div>
 
@@ -156,39 +154,6 @@ function ContactPage() {
                     </div>
                   </div>
 
-                  {/* Payment Accepted */}
-                  <div className="pt-6 flex items-start gap-6">
-                    <span className="font-mono text-xs font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                      [05]
-                    </span>
-                    <div className="space-y-3 flex-1">
-                      <div className="flex items-center gap-2 font-mono text-xs text-zinc-500 uppercase tracking-wider">
-                        <Wallet className="h-3.5 w-3.5 text-black dark:text-white" /> PAYMENT METHODS
-                      </div>
-                      <div className="flex flex-wrap gap-2 font-mono text-xs">
-                        {(data?.payment_cash ?? true) && (
-                          <span className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 font-bold uppercase tracking-wider text-black dark:text-white">
-                            [ CASH ]
-                          </span>
-                        )}
-                        {(data?.payment_gcash ?? true) && (
-                          <span className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 font-bold uppercase tracking-wider text-black dark:text-white">
-                            [ GCASH ]
-                          </span>
-                        )}
-                        {(data?.payment_maya ?? true) && (
-                          <span className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 font-bold uppercase tracking-wider text-black dark:text-white">
-                            [ MAYA ]
-                          </span>
-                        )}
-                        {(data?.payment_card ?? true) && (
-                          <span className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5">
-                            <CreditCard className="h-3.5 w-3.5" /> [ CREDIT/DEBIT ]
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
                 </div>
               )}

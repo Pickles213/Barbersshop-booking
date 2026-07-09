@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 
 export function SettingsPage() {
   const qc = useQueryClient();
@@ -53,7 +52,7 @@ export function SettingsPage() {
     <div className="space-y-6">
       <DashboardHeader
         title="Settings"
-        subtitle="Shop information, hours and payment methods"
+        subtitle="Shop information and operating hours"
         actions={<Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}><Save className="mr-2 h-4 w-4" />Save</Button>}
       />
 
@@ -69,17 +68,6 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Payment methods</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[["payment_cash","Cash"],["payment_gcash","GCash"],["payment_maya","Maya"],["payment_card","Card"]].map(([k,label]) => (
-            <div key={k} className="flex items-center gap-2 rounded border p-3">
-              <Switch checked={!!s[k]} onCheckedChange={(v) => setS({ ...s, [k]: v })} />
-              <Label>{label}</Label>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

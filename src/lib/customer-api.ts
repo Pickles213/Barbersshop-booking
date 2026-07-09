@@ -39,15 +39,15 @@ export async function fetchBarbers(): Promise<Barber[]> {
   if (error) throw error;
   const barbers = (data ?? []) as Barber[];
 
-  // Compute live average rating from reviews joined to bookings (source of truth for barber_id).
+  // Compute live average rating from reviews (barber_id directly or fallback to bookings relation).
   const { data: reviewRows } = await supabase
     .from("reviews")
-    .select("rating, booking:bookings(barber_id)");
+    .select("rating, barber_id, booking:bookings(barber_id)");
 
   if (reviewRows && reviewRows.length > 0) {
     const sums = new Map<string, { total: number; count: number }>();
     for (const r of reviewRows as any[]) {
-      const bid = r?.booking?.barber_id;
+      const bid = r?.barber_id || r?.booking?.barber_id;
       if (!bid || typeof r.rating !== "number") continue;
       const entry = sums.get(bid) ?? { total: 0, count: 0 };
       entry.total += r.rating;
