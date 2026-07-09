@@ -120,7 +120,7 @@ function ReviewsPage() {
               >
                 All ratings
               </button>
-              {[5, 4, 3].map((num) => (
+              {[5, 4, 3, 2, 1].map((num) => (
                 <button
                   key={num}
                   onClick={() => setRatingFilter(num)}
