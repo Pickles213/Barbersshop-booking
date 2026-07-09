@@ -23,7 +23,7 @@ export const Route = createFileRoute("/contact")({
 function ContactPage() {
   const { data, isLoading } = useQuery({ queryKey: ["shop"], queryFn: fetchShopSettings });
   const mapUrl = data?.shop_address
-    ? `https://www.google.com/maps?q=${encodeURIComponent(data.shop_address)}&output=embed`
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(data.shop_address)}&z=15&ie=UTF8&iwloc=B&output=embed`
     : null;
 
   const hoursString =
