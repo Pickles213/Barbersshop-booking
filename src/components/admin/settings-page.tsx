@@ -59,12 +59,12 @@ export function SettingsPage() {
       <Card>
         <CardHeader><CardTitle>Shop info</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="space-y-1.5"><Label>Shop name</Label><Input value={s.shop_name ?? ""} onChange={(e) => setS({ ...s, shop_name: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Email</Label><Input value={s.shop_email ?? ""} onChange={(e) => setS({ ...s, shop_email: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Phone</Label><Input value={s.shop_phone ?? ""} onChange={(e) => setS({ ...s, shop_phone: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Address</Label><Input value={s.shop_address ?? ""} onChange={(e) => setS({ ...s, shop_address: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Opening time</Label><Input type="time" value={s.open_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, open_time: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Closing time</Label><Input type="time" value={s.close_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, close_time: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0"><Label>Shop name</Label><Input value={s.shop_name ?? ""} onChange={(e) => setS({ ...s, shop_name: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0"><Label>Email</Label><Input value={s.shop_email ?? ""} onChange={(e) => setS({ ...s, shop_email: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0"><Label>Phone</Label><Input value={s.shop_phone ?? ""} onChange={(e) => setS({ ...s, shop_phone: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0"><Label>Address</Label><Input value={s.shop_address ?? ""} onChange={(e) => setS({ ...s, shop_address: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0"><Label>Opening time</Label><Input type="time" value={s.open_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, open_time: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0"><Label>Closing time</Label><Input type="time" value={s.close_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, close_time: e.target.value })} /></div>
         </CardContent>
       </Card>
 
@@ -75,10 +75,10 @@ export function SettingsPage() {
           <CardDescription>Days the shop is closed</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Input placeholder="Holiday name" value={hName} onChange={(e) => setHName(e.target.value)} />
-            <Input type="date" value={hDate} onChange={(e) => setHDate(e.target.value)} />
-            <Button onClick={() => addHoliday.mutate()} disabled={!hName || !hDate}><Plus className="mr-2 h-4 w-4" />Add</Button>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <Input placeholder="Holiday name" value={hName} onChange={(e) => setHName(e.target.value)} className="flex-1 min-w-0" />
+            <Input type="date" value={hDate} onChange={(e) => setHDate(e.target.value)} className="w-full md:w-[200px] shrink-0 min-w-0" />
+            <Button onClick={() => addHoliday.mutate()} disabled={!hName || !hDate} className="w-full md:w-auto shrink-0"><Plus className="mr-2 h-4 w-4" />Add</Button>
           </div>
           <div className="space-y-2">
             {holidays.map((h) => (

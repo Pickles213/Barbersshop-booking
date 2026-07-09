@@ -259,7 +259,7 @@ export function SchedulesPage() {
                                 const s = rows[d];
                                 if (!s || s.is_off) return null;
                                 return (
-                                  <div key={day} className="space-y-1.5 rounded-lg border p-2 text-xs">
+                                  <div key={day} className="space-y-1.5 rounded-lg border p-2 text-xs min-w-0">
                                     <p className="text-center font-medium">{day}</p>
                                     <Input
                                       type="time"
@@ -319,8 +319,8 @@ export function SchedulesPage() {
         <CardContent className="space-y-4">
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Add a leave</p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="space-y-1 min-w-0">
                 <Label className="text-xs text-muted-foreground">Barber</Label>
                 <Select value={toForm.barber_id} onValueChange={(v) => setToForm({ ...toForm, barber_id: v })}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select barber" /></SelectTrigger>
@@ -331,19 +331,19 @@ export function SchedulesPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <Label className="text-xs text-muted-foreground">Start date</Label>
                 <Input type="date" className="h-8 text-xs" value={toForm.start_date} onChange={(e) => setToForm({ ...toForm, start_date: e.target.value })} />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <Label className="text-xs text-muted-foreground">End date</Label>
                 <Input type="date" className="h-8 text-xs" value={toForm.end_date} onChange={(e) => setToForm({ ...toForm, end_date: e.target.value })} />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <Label className="text-xs text-muted-foreground">Reason</Label>
                 <Input className="h-8 text-xs" placeholder="e.g. Family, Sick, Vacation" value={toForm.reason} onChange={(e) => setToForm({ ...toForm, reason: e.target.value })} />
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end sm:col-span-2 lg:col-span-1">
                 <Button size="sm" className="h-8 w-full text-xs" onClick={() => addTimeOff.mutate()}
                   disabled={!toForm.barber_id || !toForm.start_date || !toForm.end_date || addTimeOff.isPending}>
                   <Plus className="mr-1.5 h-3.5 w-3.5" /> Add leave

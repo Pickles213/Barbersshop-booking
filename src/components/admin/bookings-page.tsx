@@ -157,13 +157,13 @@ export function BookingsPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit booking" : "New booking"}</DialogTitle></DialogHeader>
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 space-y-1.5"><Label>Customer name</Label>
+                <div className="col-span-2 space-y-1.5 min-w-0"><Label>Customer name</Label>
                   <Input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
                 </div>
-                <div className="col-span-2 space-y-1.5"><Label>Phone</Label>
+                <div className="col-span-2 space-y-1.5 min-w-0"><Label>Phone</Label>
                   <Input value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} />
                 </div>
-                <div className="space-y-1.5"><Label>Service</Label>
+                <div className="space-y-1.5 min-w-0"><Label>Service</Label>
                   <Select value={form.service_id} onValueChange={(v) => {
                     const svc = services.find((s) => s.id === v);
                     setForm({ ...form, service_id: v, price: svc ? Number(svc.price) : form.price });
@@ -174,7 +174,7 @@ export function BookingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5"><Label>Barber</Label>
+                <div className="space-y-1.5 min-w-0"><Label>Barber</Label>
                   <Select value={form.barber_id} onValueChange={(v) => setForm({ ...form, barber_id: v })}>
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
@@ -182,13 +182,13 @@ export function BookingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5"><Label>Date</Label>
+                <div className="space-y-1.5 min-w-0"><Label>Date</Label>
                   <Input type="date" value={form.booking_date} onChange={(e) => setForm({ ...form, booking_date: e.target.value })} />
                 </div>
-                <div className="space-y-1.5"><Label>Time</Label>
+                <div className="space-y-1.5 min-w-0"><Label>Time</Label>
                   <Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
                 </div>
-                <div className="space-y-1.5"><Label>Status</Label>
+                <div className="space-y-1.5 min-w-0"><Label>Status</Label>
                   <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Status })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -196,7 +196,7 @@ export function BookingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5"><Label>Price (₱)</Label>
+                <div className="space-y-1.5 min-w-0"><Label>Price (₱)</Label>
                   <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} />
                 </div>
               </div>

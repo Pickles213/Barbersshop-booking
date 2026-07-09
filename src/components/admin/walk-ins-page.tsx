@@ -219,7 +219,7 @@ export function WalkInsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Link existing customer (optional)</Label>
+              <Label>Link existing customer</Label>
               <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
