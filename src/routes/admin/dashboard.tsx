@@ -44,7 +44,7 @@ function formatWhen(date: string, time?: string | null) {
 }
 
 function DashboardPage() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("sv-SE");
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
 

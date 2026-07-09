@@ -68,12 +68,10 @@ function QueuePage() {
     queryKey: ["my_ticket", me?.id],
     enabled: !!me,
     queryFn: async () => {
-      const iso = new Date().toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("walk_ins")
         .select("id, queue_number, status, service_id, created_at")
         .eq("user_id", me!.id)
-        .gte("created_at", `${iso}T00:00:00Z`)
         .in("status", ["waiting", "in_progress"])
         .order("created_at", { ascending: false })
         .limit(1)
