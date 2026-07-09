@@ -300,10 +300,10 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
   const reviews = useQuery({
     queryKey: ["reviews", barber?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("reviews")
-        .select("*")
-        .eq("barber_id", barber!.id)
+        .select("*, bookings!inner(barber_id)")
+        .eq("bookings.barber_id", barber!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];

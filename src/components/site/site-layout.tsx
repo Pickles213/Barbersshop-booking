@@ -22,8 +22,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const submitReview = useMutation({
     mutationFn: async (payload: {
       booking_id: string | null;
-      barber_id: string | null;
-      barber_name: string | null;
       customer_name: string;
       service_name: string;
       rating: number;
@@ -258,8 +256,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               onClick={() => {
                 submitReview.mutate({
                   booking_id: pendingReview?.id || null,
-                  barber_id: pendingReview?.barber_id || null,
-                  barber_name: pendingReview?.barber_name || null,
                   customer_name: pendingReview?.customer_name || "Customer",
                   service_name: pendingReview?.service_name || "Service",
                   rating: reviewRating,

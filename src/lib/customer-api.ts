@@ -90,7 +90,7 @@ export async function createBooking(payload: {
   notes?: string;
 }) {
   const { data, error } = await supabase.rpc("public_booking_create", {
-    p_service_ids: payload.service_ids,
+    p_service_id: payload.service_ids[0],
     p_barber_id: payload.barber_id as unknown as string,
     p_booking_date: payload.booking_date,
     p_start_time: payload.start_time,
@@ -120,7 +120,7 @@ export type BookingServiceLine = {
 };
 
 export async function fetchBookingServices(bookingId: string): Promise<BookingServiceLine[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("booking_services")
     .select("id,service_id,service_name,price,duration_minutes")
     .eq("booking_id", bookingId);
@@ -143,7 +143,7 @@ export type MyBooking = {
 };
 
 export async function fetchMyBookings(userId: string): Promise<MyBooking[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("bookings")
     .select(
       "id,reference,booking_date,start_time,status,price,notes,barber_id,service_id,created_at,booking_services(id,service_id,service_name,price,duration_minutes)",
