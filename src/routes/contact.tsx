@@ -5,7 +5,7 @@ import type { ComponentType } from "react";
 
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchShopSettings } from "@/lib/customer-api";
-import { formatTime, cn } from "@/lib/utils";
+import { formatTime, cn, formatPhoneNumber } from "@/lib/utils";
 
 export const Route = createFileRoute("/contact")({
   ssr: false,
@@ -117,7 +117,7 @@ function ContactPage() {
                         <Phone className="h-3.5 w-3.5 text-black dark:text-white" /> PHONE
                       </div>
                       <p className="text-lg sm:text-xl font-extrabold font-mono tracking-tight text-black dark:text-white">
-                        {"0967 676 7676"}
+                        {formatPhoneNumber(data?.shop_phone) || "0967 676 7676"}
                       </p>
                     </div>
                   </div>

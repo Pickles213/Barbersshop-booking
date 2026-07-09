@@ -6,7 +6,7 @@ import { ArrowUpRight, Clock, MapPin, Phone, Scissors, Star } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, formatPhoneNumber } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -642,7 +642,7 @@ function HomePage() {
                   href={`tel:${shop.data.shop_phone}`}
                   className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider underline hover:opacity-80 transition-opacity px-4 py-3"
                 >
-                  <Phone className="h-4 w-4" /> {shop.data.shop_phone}
+                  <Phone className="h-4 w-4" /> {formatPhoneNumber(shop.data.shop_phone)}
                 </a>
               )}
             </div>
