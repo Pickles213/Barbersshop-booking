@@ -107,6 +107,11 @@ function BookPage() {
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
 
+  const holidays = useQuery({
+    queryKey: ["holidays"],
+    queryFn: async () => (await supabase.from("holidays").select("*").order("holiday_date")).data ?? [],
+  });
+
   // Fetch categories linked to the selected barber (if any)
   const { data: barberCategories = [] } = useQuery({
     queryKey: ["barber-categories-ids", barberId],
@@ -228,6 +233,9 @@ function BookPage() {
   }, [details.email]);
 
   const dateStr = date ? format(date, "yyyy-MM-dd") : null;
+  const currentHoliday = useMemo(() => {
+    return (holidays.data ?? []).find((h: any) => h.holiday_date === dateStr);
+  }, [holidays.data, dateStr]);
 
   // Generate 60 visible days (approx. 2 months)
   const visibleDates = useMemo(() => {
@@ -612,7 +620,9 @@ function BookPage() {
                               disabled={(d) => {
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
-                                return d < today;
+                                if (d < today) return true;
+                                const formattedD = format(d, "yyyy-MM-dd");
+                                return (holidays.data ?? []).some((h: any) => h.holiday_date === formattedD);
                               }}
                               initialFocus
                               className="p-0 border-0"
@@ -648,8 +658,10 @@ function BookPage() {
                   className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x pointer-events-auto scroll-smooth"
                 >
                   {visibleDates.map((d) => {
-                    const isSel = date && format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
-                    const isToday = format(d, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                    const formattedD = format(d, "yyyy-MM-dd");
+                    const isSel = date && formattedD === format(date, "yyyy-MM-dd");
+                    const isToday = formattedD === format(new Date(), "yyyy-MM-dd");
+                    const holiday = (holidays.data ?? []).find((h: any) => h.holiday_date === formattedD);
 
                     return (
                       <button
@@ -660,11 +672,13 @@ function BookPage() {
                           setSlot(null);
                         }}
                         className={cn(
-                          "flex flex-col items-center justify-between p-4 min-w-[85px] h-26 rounded-2xl border transition-all snap-start shrink-0",
+                          "flex flex-col items-center justify-between p-4 min-w-[85px] h-26 rounded-2xl border transition-all snap-start shrink-0 relative",
                           isSel
                             ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white scale-95 shadow-md font-bold"
+                            : holiday
+                            ? "bg-red-50/30 dark:bg-red-950/10 border-red-200/60 dark:border-red-900/40 text-red-500/80 dark:text-red-400"
                             : "bg-zinc-50 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800/80 text-zinc-850 dark:text-zinc-200 hover:border-black dark:hover:border-white",
-                          isToday && !isSel && "border-zinc-400 dark:border-zinc-650",
+                          isToday && !isSel && !holiday && "border-zinc-400 dark:border-zinc-650",
                         )}
                       >
                         <span className="text-[10px] font-mono uppercase tracking-wider opacity-60">
@@ -673,8 +687,8 @@ function BookPage() {
                         <span className="text-2xl font-black font-mono leading-none my-1">
                           {format(d, "d")}
                         </span>
-                        <span className="text-[10px] font-mono uppercase tracking-wider opacity-60">
-                          {format(d, "MMM")}
+                        <span className="text-[10px] font-mono uppercase tracking-wider opacity-60 font-black">
+                          {holiday ? "CLOSED" : format(d, "MMM")}
                         </span>
                       </button>
                     );
@@ -700,7 +714,21 @@ function BookPage() {
                     </p>
                   )}
 
-                  {date && !slots.isLoading && filteredSlots.length === 0 && (
+                  {date && !slots.isLoading && currentHoliday && (
+                    <div className="text-center py-10 border-2 border-dashed border-red-200 dark:border-red-900/50 bg-red-50/30 dark:bg-red-950/10 rounded-3xl p-6">
+                      <p className="text-xs font-mono text-red-500 dark:text-red-400 uppercase tracking-widest font-black">
+                        [ CLOSED FOR HOLIDAY ]
+                      </p>
+                      <p className="text-lg font-extrabold uppercase mt-2 text-black dark:text-white">
+                        {currentHoliday.name}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-2">
+                        Please select another date using the scrollbar or calendar.
+                      </p>
+                    </div>
+                  )}
+
+                  {date && !slots.isLoading && !currentHoliday && filteredSlots.length === 0 && (
                     <div className="text-center py-10 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-6">
                       <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
                         No Slots Available Today
