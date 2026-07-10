@@ -164,6 +164,11 @@ function AuthPage() {
       setView("verify"); // This switches your UI to the OTP input screen
       return;
     }
+
+    // Email confirmation is OFF — Supabase returns a session immediately
+    // Redirect straight to the dashboard
+    toast.success("Account created! Welcome!");
+    await goAfterAuth();
   };
 
   const handleVerify = async (e: React.FormEvent) => {
