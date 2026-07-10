@@ -72,8 +72,8 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <Scissors className="h-5 w-5" />
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <img src="/logo.jpg" alt="Logo" className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
             <p className="truncate text-sm font-semibold">Southside Barbers</p>

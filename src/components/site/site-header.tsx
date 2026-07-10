@@ -45,8 +45,8 @@ export function SiteHeader() {
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 md:px-10">
         {/* Left · Brand Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="grid h-10 w-10 place-items-center rounded-none bg-black text-white dark:bg-white dark:text-black font-extrabold transition-transform duration-300 group-hover:scale-105">
-            <Scissors className="h-5 w-5" />
+          <div className="h-10 w-10 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 transition-transform duration-300 group-hover:scale-105 shrink-0">
+            <img src="/logo.jpg" alt="Logo" className="h-full w-full object-cover animate-none" />
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-extrabold tracking-tighter uppercase leading-none">

@@ -391,17 +391,20 @@ function QueuePage() {
                 {waiting.map((r, i) => (
                   <div
                     key={r.id}
-                    className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between"
+                    className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-4 min-w-0"
                   >
-                    <div className="flex items-baseline gap-3">
-                      <span className="font-mono text-2xl font-black text-black dark:text-white">
+                    <div className="flex items-baseline gap-3 min-w-0 flex-1">
+                      <span className="font-mono text-2xl font-black text-black dark:text-white shrink-0">
                         #{r.queue_number}
                       </span>
-                      <span className="font-bold uppercase text-sm text-zinc-700 dark:text-zinc-300">
+                      <span 
+                        className="font-bold uppercase text-sm text-zinc-700 dark:text-zinc-300 truncate"
+                        title={r.first_name || "Guest"}
+                      >
                         {r.first_name || "Guest"}
                       </span>
                     </div>
-                    <span className="font-mono text-xs text-zinc-400">
+                    <span className="font-mono text-xs text-zinc-400 shrink-0">
                       ~{r.duration_minutes || 30}m
                     </span>
                   </div>

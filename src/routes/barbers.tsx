@@ -261,19 +261,22 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
 
     const handleScroll = () => {
       const sections = ["profile", "services", "portfolio", "reviews"];
-      let currentSection = "profile";
+      let activeSection = "profile";
+      let minDistance = Infinity;
       
       for (const section of sections) {
         const el = document.getElementById(`section-${section}`);
         if (el) {
           const rect = el.getBoundingClientRect();
           const containerRect = container.getBoundingClientRect();
-          if (rect.top - containerRect.top <= 80) {
-            currentSection = section;
+          const distance = Math.abs(rect.top - containerRect.top - 12);
+          if (distance < minDistance) {
+            minDistance = distance;
+            activeSection = section;
           }
         }
       }
-      setActiveTab(currentSection);
+      setActiveTab(activeSection);
     };
 
     container.addEventListener("scroll", handleScroll);

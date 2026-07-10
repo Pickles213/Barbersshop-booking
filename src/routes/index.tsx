@@ -624,9 +624,11 @@ function HomePage() {
                         />
                       ))}
                     </div>
-                    <p className="font-serif italic text-lg leading-relaxed text-zinc-800 dark:text-zinc-200 line-clamp-3">
-                      "{r.comment || "Great service, very professional haircut!"}"
-                    </p>
+                    {r.comment && (
+                      <p className="font-serif italic text-lg leading-relaxed text-zinc-800 dark:text-zinc-200 line-clamp-3">
+                        "{r.comment}"
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[11px] font-mono tracking-wider">

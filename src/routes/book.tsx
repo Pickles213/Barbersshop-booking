@@ -617,7 +617,7 @@ function BookPage() {
                             className="fixed inset-0 z-40"
                             onClick={() => setShowFullCalendar(false)}
                           />
-                          <div className="absolute right-0 top-12 z-50 bg-white dark:bg-zinc-950 p-6 border-2 border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl flex justify-center shadow-inner min-w-[320px]">
+                          <div className="absolute right-0 top-12 z-50 bg-white dark:bg-zinc-950 p-6 border-2 border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl flex flex-col items-center shadow-inner min-w-[320px]">
                             <Calendar
                               mode="single"
                               selected={date}
@@ -656,6 +656,20 @@ function BookPage() {
                                 const isOnLeave = timeOff.some((t: any) => t.start_date <= formattedD && t.end_date >= formattedD);
                                 return isOnLeave;
                               }}
+                              modifiers={{
+                                holiday: (d) => {
+                                  const formattedD = format(d, "yyyy-MM-dd");
+                                  return (holidays.data ?? []).some((h: any) => h.holiday_date === formattedD);
+                                },
+                                onLeave: (d) => {
+                                  const formattedD = format(d, "yyyy-MM-dd");
+                                  return timeOff.some((t: any) => t.start_date <= formattedD && t.end_date >= formattedD);
+                                }
+                              }}
+                              modifiersClassNames={{
+                                holiday: "bg-red-50 text-red-655 hover:bg-red-100 hover:text-red-700 dark:bg-red-950/20 dark:text-red-400 border border-red-200 dark:border-red-900/30 line-through rounded-xl",
+                                onLeave: "bg-amber-50 text-amber-600 hover:bg-amber-100 hover:text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-250 dark:border-amber-900/30 line-through rounded-xl"
+                              }}
                               initialFocus
                               className="p-0 border-0"
                               classNames={{
@@ -677,6 +691,17 @@ function BookPage() {
                                   "border-b-2 border-black dark:border-white rounded-none font-black text-black dark:text-white",
                               }}
                             />
+                            {/* Calendar Legend */}
+                            <div className="mt-4 pt-4 border-t border-zinc-150 dark:border-zinc-800 w-full flex justify-around text-[9px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                              <div className="flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-red-500" />
+                                <span>Closed / Holiday</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                                <span>Barber Leave</span>
+                              </div>
+                            </div>
                           </div>
                         </>
                       )}

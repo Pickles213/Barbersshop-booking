@@ -167,9 +167,11 @@ function ReviewsPage() {
                       ))}
                     </div>
 
-                    <p className="font-serif italic text-lg leading-relaxed text-zinc-800 dark:text-zinc-200">
-                      "{r.comment || "Outstanding cut! The staff was extremely professional and the booking process online was super convenient."}"
-                    </p>
+                    {r.comment && (
+                      <p className="font-serif italic text-lg leading-relaxed text-zinc-800 dark:text-zinc-200">
+                        "{r.comment}"
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800/80 flex justify-between items-center text-xs font-mono">
