@@ -255,33 +255,28 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
     setActiveTab("profile");
   }, [barber?.id]);
 
-  useEffect(() => {
-    const container = document.getElementById("barber-scroll-container");
-    if (!container) return;
-
-    const handleScroll = () => {
-      const sections = ["profile", "services", "portfolio", "reviews"];
-      let activeSection = "profile";
-      let minDistance = Infinity;
-      
-      for (const section of sections) {
-        const el = document.getElementById(`section-${section}`);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          const distance = Math.abs(rect.top - containerRect.top - 12);
-          if (distance < minDistance) {
-            minDistance = distance;
-            activeSection = section;
-          }
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const sections = ["profile", "services", "portfolio", "reviews"];
+    const containerRect = container.getBoundingClientRect();
+    let currentSection = "profile";
+    
+    for (const section of sections) {
+      const el = document.getElementById(`section-${section}`);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top - containerRect.top <= 50) {
+          currentSection = section;
         }
       }
-      setActiveTab(activeSection);
-    };
-
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [barber?.id]);
+    }
+    
+    if (Math.abs(container.scrollHeight - container.clientHeight - container.scrollTop) < 10) {
+      currentSection = "reviews";
+    }
+    
+    setActiveTab(currentSection);
+  };
 
   const handleTabClick = (section: string) => {
     setActiveTab(section);
@@ -443,6 +438,7 @@ function PortfolioDialog({ barber, onClose }: { barber: Barber | null; onClose: 
           {/* Continuous Scroll Viewport */}
           <div 
             id="barber-scroll-container"
+            onScroll={handleScroll}
             className="flex-1 overflow-y-auto pr-1 space-y-8 scroll-smooth"
           >
             {/* Section 1: Profile */}
