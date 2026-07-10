@@ -49,8 +49,36 @@ export function SchedulesPage() {
 
   const { data: timeOff = [] } = useQuery({
     queryKey: ["time_off"],
-    queryFn: async () =>
-      (await supabase.from("time_off").select("*, barber:barbers(name)").order("start_date")).data ?? [],
+    queryFn: async () => {
+      // 1. First try querying the admin view to get all columns including reason
+      const { data, error } = await supabase
+        .from("time_off_admin")
+        .select("*, barber:barbers(name)")
+        .order("start_date");
+
+      if (!error && data) {
+        return data as any[];
+      }
+
+      // Log warning for debug but fallback gracefully
+      console.warn("Could not query time_off_admin, falling back to public time_off table without reason:", error);
+
+      // 2. Fallback: Query time_off directly but only requesting columns that authenticated users have SELECT permission for
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from("time_off")
+        .select("id, barber_id, start_date, end_date, created_at, barber:barbers(name)")
+        .order("start_date");
+
+      if (fallbackError) {
+        console.error("Failed to query time_off fallback:", fallbackError);
+        throw fallbackError;
+      }
+
+      return (fallbackData || []).map((item) => ({
+        ...item,
+        reason: null, // Since column-level SELECT for reason is restricted, set to null
+      })) as any[];
+    },
   });
 
   const updateSched = useMutation({

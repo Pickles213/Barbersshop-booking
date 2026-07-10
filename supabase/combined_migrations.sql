@@ -1249,3 +1249,17 @@
   CREATE POLICY "Admins delete barber portfolio"
     ON storage.objects FOR DELETE TO authenticated
     USING (bucket_id = 'barber-portfolio' AND public.has_role(auth.uid(), 'admin'));
+
+  -- ====================================================================================
+  -- MIGRATION 23: 20260710020000_fix_time_off_admin_view.sql
+  -- ====================================================================================
+
+  -- Drop the security-invoker view and recreate it as a security-definer view
+  DROP VIEW IF EXISTS public.time_off_admin;
+
+  CREATE OR REPLACE VIEW public.time_off_admin
+  AS
+  SELECT * FROM public.time_off
+  WHERE public.has_role(auth.uid(), 'admin');
+
+  GRANT SELECT ON public.time_off_admin TO authenticated;

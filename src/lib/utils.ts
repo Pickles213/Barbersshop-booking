@@ -17,3 +17,27 @@ export function formatTime(time: string | null | undefined): string {
   const h12 = h % 12 || 12;
   return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
+
+/**
+ * Formats a Philippine mobile number to a readable "09XX XXX XXXX" format.
+ * Works with "+639XXXXXXXXX", "639XXXXXXXXX", and "09XXXXXXXXX".
+ */
+export function formatPhoneNumber(phone: string | null | undefined): string {
+  if (!phone) return "";
+  const cleaned = phone.replace(/[^\d+]/g, "");
+  if (cleaned.startsWith("+63") && cleaned.length === 13) {
+    const main = cleaned.slice(3);
+    return `0${main.slice(0, 3)} ${main.slice(3, 6)} ${main.slice(6)}`;
+  }
+  if (cleaned.startsWith("63") && cleaned.length === 12) {
+    const main = cleaned.slice(2);
+    return `0${main.slice(0, 3)} ${main.slice(3, 6)} ${main.slice(6)}`;
+  }
+  if (cleaned.startsWith("09") && cleaned.length === 11) {
+    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+  }
+  if (cleaned.length === 11) {
+    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+  }
+  return phone;
+}

@@ -1,24 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Clock, MapPin, Phone, Scissors, Star } from "lucide-react";
+import { ArrowUpRight, Clock, MapPin, Phone, Scissors, Star, ShieldAlert } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, formatPhoneNumber } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Southside Barbers — Premium Barbershop Network" },
+      { title: "Southside Barbers" },
       {
         name: "description",
         content: "Precision cuts, hot-towel shaves and modern styling. Book your appointment online without unnecessary waiting.",
       },
-      { property: "og:title", content: "Southside Barbers — Premium Barbershop Network" },
+      { property: "og:title", content: "Southside Barbers" },
       {
         property: "og:description",
         content: "Precision cuts, hot-towel shaves and modern styling. Book online without unnecessary waiting.",
@@ -49,6 +57,34 @@ function HomePage() {
   const services = useQuery({ queryKey: ["services"], queryFn: fetchServices });
   const barbers = useQuery({ queryKey: ["barbers"], queryFn: fetchBarbers });
   const shop = useQuery({ queryKey: ["shop"], queryFn: fetchShopSettings });
+
+  const holidays = useQuery({
+    queryKey: ["holidays"],
+    queryFn: async () => (await supabase.from("holidays").select("*")).data ?? [],
+  });
+
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+
+  const todayStr = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+  const todayHoliday = useMemo(() => {
+    return (holidays.data ?? []).find((h: any) => h.holiday_date === todayStr);
+  }, [holidays.data, todayStr]);
+
+  useEffect(() => {
+    if (todayHoliday) {
+      const dismissed = localStorage.getItem(`dismissed_holiday_${todayStr}`);
+      if (!dismissed) {
+        setShowHolidayModal(true);
+      }
+    }
+  }, [todayHoliday, todayStr]);
+
+  const handleOpenChange = (open: boolean) => {
+    setShowHolidayModal(open);
+    if (!open) {
+      localStorage.setItem(`dismissed_holiday_${todayStr}`, "true");
+    }
+  };
 
   const reviewsQuery = useQuery({
     queryKey: ["homepage-reviews"],
@@ -185,7 +221,7 @@ function HomePage() {
                 ) : null
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              
+
               <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white z-10">
                 <div>
                   <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-300">
@@ -286,13 +322,13 @@ function HomePage() {
             <div className="lg:col-span-5">
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
                 <img
-                  src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80"
+                  src="/images/img1.jpg"
                   alt="Barbershop Interior"
                   className="w-full h-full object-cover filter contrast-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
-                  [ SOUTHSIDE STUDIO · MAKATI ]
+                  [ SOUTHSIDE BARBERS · CAVITE ]
                 </div>
               </div>
             </div>
@@ -322,12 +358,16 @@ function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left · Image */}
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=80"
+                  src="/images/img3.jpg"
                   alt="Barber Precision Cut"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-2xl"
                 />
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
+                  [ SOUTHSIDE BARBERS · CAVITE ]
+                </div>
               </div>
             </div>
 
@@ -457,12 +497,16 @@ function HomePage() {
 
             {/* Right Col · Accompanying Photo */}
             <div className="lg:col-span-4 sticky top-28">
-              <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
                 <img
-                  src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&q=80"
+                  src="/images/img2.jpg"
                   alt="Barbershop Service"
-                  className="w-full h-full object-cover filter contrast-105"
+                  className="w-full h-full object-cover rounded-2xl contrast-[1.05]"
                 />
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
+                  [ SOUTHSIDE BARBERS · CAVITE ]
+                </div>
               </div>
             </div>
           </div>
@@ -509,7 +553,7 @@ function HomePage() {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter contrast-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-                  
+
                   <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
                     <div>
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-400">
@@ -628,19 +672,58 @@ function HomePage() {
                   BOOK NOW <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
                 </Link>
               </Button>
-              
+
               {shop.data?.shop_phone && (
                 <a
                   href={`tel:${shop.data.shop_phone}`}
                   className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider underline hover:opacity-80 transition-opacity px-4 py-3"
                 >
-                  <Phone className="h-4 w-4" /> {shop.data.shop_phone}
+                  <Phone className="h-4 w-4" /> {formatPhoneNumber(shop.data.shop_phone)}
                 </a>
               )}
             </div>
           </div>
         </div>
       </section>
+
+      <Dialog open={showHolidayModal} onOpenChange={handleOpenChange}>
+        <DialogContent className="border-2 border-black dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 rounded-3xl max-w-md shadow-2xl">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-500 p-4 rounded-full">
+                <ShieldAlert className="h-8 w-8 animate-bounce" />
+              </div>
+            </div>
+            <DialogTitle className="text-2xl font-black tracking-tight text-center uppercase text-black dark:text-white font-mono">
+              [ SHOP CLOSED TODAY ]
+            </DialogTitle>
+            <DialogDescription className="text-zinc-500 dark:text-zinc-400 text-center text-sm mt-3 leading-relaxed">
+              We are closed today, <span className="font-bold text-black dark:text-white">{format(new Date(), "MMMM d, yyyy")}</span>, in observance of:
+              <span className="block text-lg font-black text-red-500 dark:text-red-400 uppercase mt-2">
+                {todayHoliday?.name}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6 flex flex-col gap-3">
+            <Button
+              asChild
+              className="bg-black text-white dark:bg-white dark:text-black font-extrabold text-xs tracking-wider uppercase py-4 rounded-xl hover:scale-[1.02] transition-transform cursor-pointer"
+              onClick={() => setShowHolidayModal(false)}
+            >
+              <Link to="/book">
+                Book for another day
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              className="border-zinc-200 dark:border-zinc-800 text-zinc-500 font-extrabold text-xs tracking-wider uppercase py-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+              onClick={() => setShowHolidayModal(false)}
+            >
+              Okay, I understand
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </SiteLayout>
   );
 }

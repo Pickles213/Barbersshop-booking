@@ -10,6 +10,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+function sanitizePhoneInput(value: string): string {
+  const cleaned = value.replace(/[^\d+]/g, "");
+  const maxLen = cleaned.startsWith("+") ? 13 : 11;
+  return cleaned.slice(0, maxLen);
+}
+
+function normalizePhPhone(input: string): string | null {
+  const digits = input.replace(/[^\d]/g, "");
+  if (/^09\d{9}$/.test(digits)) return `+63${digits.slice(1)}`;
+  if (/^639\d{9}$/.test(digits)) return `+${digits}`;
+  return null;
+}
+
 export function SettingsPage() {
   const qc = useQueryClient();
   const { data: settings } = useQuery({
@@ -21,7 +34,15 @@ export function SettingsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("shop_settings").update(s).eq("id", 1);
+      const normalized = normalizePhPhone(s.shop_phone ?? "");
+      if (s.shop_phone && !normalized) {
+        throw new Error("Invalid phone number. Please use Philippine format (e.g. 09171234567 or +639171234567).");
+      }
+      const updatedSettings = {
+        ...s,
+        shop_phone: normalized || s.shop_phone,
+      };
+      const { error } = await supabase.from("shop_settings").update(updatedSettings).eq("id", 1);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["shop_settings"] }); },
@@ -61,7 +82,18 @@ export function SettingsPage() {
         <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="space-y-1.5 min-w-0"><Label>Shop name</Label><Input value={s.shop_name ?? ""} onChange={(e) => setS({ ...s, shop_name: e.target.value })} /></div>
           <div className="space-y-1.5 min-w-0"><Label>Email</Label><Input value={s.shop_email ?? ""} onChange={(e) => setS({ ...s, shop_email: e.target.value })} /></div>
-          <div className="space-y-1.5 min-w-0"><Label>Phone</Label><Input value={s.shop_phone ?? ""} onChange={(e) => setS({ ...s, shop_phone: e.target.value })} /></div>
+          <div className="space-y-1.5 min-w-0">
+            <Label>Phone</Label>
+            <Input
+              value={s.shop_phone ?? ""}
+              onChange={(e) => setS({ ...s, shop_phone: sanitizePhoneInput(e.target.value) })}
+              placeholder="09171234567"
+              maxLength={13}
+            />
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Philippine format, e.g. 09171234567 or +639171234567
+            </p>
+          </div>
           <div className="space-y-1.5 min-w-0"><Label>Address</Label><Input value={s.shop_address ?? ""} onChange={(e) => setS({ ...s, shop_address: e.target.value })} /></div>
           <div className="space-y-1.5 min-w-0"><Label>Opening time</Label><Input type="time" value={s.open_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, open_time: e.target.value })} /></div>
           <div className="space-y-1.5 min-w-0"><Label>Closing time</Label><Input type="time" value={s.close_time?.slice(0,5) ?? ""} onChange={(e) => setS({ ...s, close_time: e.target.value })} /></div>
