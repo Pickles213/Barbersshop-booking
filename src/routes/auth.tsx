@@ -18,8 +18,7 @@ import {
 // Set VITE_APP_URL in your Vercel environment variables to your production URL.
 // Falls back to the current origin so local dev still works.
 const APP_ORIGIN =
-  (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") ??
-  (typeof window !== "undefined" ? window.location.origin : "");
+  typeof window !== "undefined" ? window.location.origin : "";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
