@@ -6,14 +6,15 @@ import type { ComponentType } from "react";
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchShopSettings } from "@/lib/customer-api";
 import { formatTime, cn, formatPhoneNumber } from "@/lib/utils";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/contact")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Visit & Contact — Southside Barbers" },
-      { name: "description", content: "Shop hours, address, and phone number at Southside Barbers." },
-      { property: "og:title", content: "Visit & Contact — Southside Barbers" },
+      { title: `Visit & Contact — ${BRANDING.name}` },
+      { name: "description", content: `Shop hours, address, and phone number at ${BRANDING.name}.` },
+      { property: "og:title", content: `Visit & Contact — ${BRANDING.name}` },
       { property: "og:description", content: "Shop hours, address, and phone number." },
     ],
   }),
@@ -60,7 +61,7 @@ function ContactPage() {
         <div className="flex whitespace-nowrap justify-around sm:justify-between px-6 max-w-7xl mx-auto">
           <span>OPEN DAILY</span>
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
-          <span>SOUTHSIDE BARBERS</span>
+          <span>{BRANDING.name.toUpperCase()}</span>
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
           <span>WALK-INS WELCOME</span>
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
@@ -167,7 +168,7 @@ function ContactPage() {
                     src={mapUrl}
                     className="h-full w-full filter grayscale contrast-125 transition-all duration-500 group-hover:filter-none"
                     loading="lazy"
-                    title="Southside Barbers Map Location"
+                    title={`${BRANDING.name} Map Location`}
                   />
                 ) : (
                   <div className="grid h-full place-items-center text-center p-12 bg-zinc-100 dark:bg-zinc-900 text-zinc-500">
@@ -177,10 +178,10 @@ function ContactPage() {
                         [ MAP LOCATION EMBED ]
                       </p>
                       <h3 className="text-2xl font-black uppercase tracking-tight text-black dark:text-white">
-                        SOUTHSIDE BARBERS
+                        {BRANDING.name.toUpperCase()}
                       </h3>
                       <p className="text-xs max-w-sm mx-auto">
-                        123 Southside Ave, District 4, Manila. Easily accessible via public transit with street parking out front.
+                        {BRANDING.addressFallback}. Easily accessible via public transit with street parking out front.
                       </p>
                     </div>
                   </div>

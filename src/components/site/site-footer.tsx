@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Scissors, ArrowUpRight } from "lucide-react";
+import { BRANDING } from "@/config/branding";
 
 export function SiteFooter() {
   return (
@@ -9,15 +10,15 @@ export function SiteFooter() {
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center bg-white text-black font-extrabold">
-                <Scissors className="h-5 w-5" />
+              <div className="h-10 w-10 overflow-hidden border border-zinc-800 rounded-lg shrink-0">
+                <img src="/logo.jpg" alt="Logo" className="h-full w-full object-cover" />
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col text-left">
                 <span className="text-2xl font-extrabold tracking-tighter uppercase leading-none text-white">
-                  Southside
+                  {BRANDING.shortName}
                 </span>
                 <span className="text-[10px] font-semibold tracking-[0.25em] text-zinc-400 uppercase mt-0.5">
-                  Barbershop Network
+                  {BRANDING.tagline} Network
                 </span>
               </div>
             </div>
@@ -86,7 +87,7 @@ export function SiteFooter() {
         {/* Bottom Bar */}
         <div className="mt-16 border-t border-zinc-800/80 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
           <div>
-            © {new Date().getFullYear()} SOUTHSIDE BARBERSHOP. ALL RIGHTS RESERVED.
+            © {new Date().getFullYear()} {BRANDING.fullName.toUpperCase()}. ALL RIGHTS RESERVED.
           </div>
           <div className="flex gap-6 uppercase tracking-wider">
             <span className="hover:text-zinc-400 cursor-pointer">Privacy Policy</span>

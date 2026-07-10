@@ -15,7 +15,9 @@ import {
   ArrowUpRight,
   CheckCircle2,
   ShieldAlert,
+  ArrowRight,
 } from "lucide-react";
+import { BRANDING } from "@/config/branding";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -54,13 +56,13 @@ export const Route = createFileRoute("/book")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Book an Appointment — Southside Barbers" },
+      { title: `Book an Appointment — ${BRANDING.name}` },
       {
         name: "description",
         content:
           "Pick a service, choose your barber, and lock in a time. Guest checkout supported.",
       },
-      { property: "og:title", content: "Book an Appointment — Southside Barbers" },
+      { property: "og:title", content: `Book an Appointment — ${BRANDING.name}` },
       {
         property: "og:description",
         content: "Pick a service, choose your barber, and lock in a time.",
@@ -466,7 +468,7 @@ function BookPage() {
                         <Scissors className="h-4 w-4" />
                       </div>
                       <h4 className="text-base font-black uppercase tracking-tight text-black dark:text-white">
-                        Southside Barbers
+                        {BRANDING.name}
                       </h4>
                     </div>
 
@@ -981,7 +983,7 @@ function BookPage() {
                         </p>
                         <p className="mt-2 font-semibold text-amber-600 dark:text-amber-400">
                           NOTE: Kindly send a screenshot of your Booking together with the payment
-                          receipt to our Southside Barbers Facebook page.
+                          receipt to our {BRANDING.facebookPageName}.
                         </p>
                       </div>
                     </div>
@@ -1010,7 +1012,7 @@ function BookPage() {
                       </div>
                       <div>
                         <h4 className="text-lg font-black uppercase tracking-tight text-black dark:text-white">
-                          Southside Barbers
+                          {BRANDING.name}
                         </h4>
                         <span className="flex items-center gap-1 text-xs font-bold font-mono">
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 5.0 (343

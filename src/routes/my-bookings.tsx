@@ -26,12 +26,13 @@ import {
   fetchBarbers,
   type MyBooking,
 } from "@/lib/customer-api";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/my-bookings")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "My Bookings — Southside Barbers" },
+      { title: `My Bookings — ${BRANDING.name}` },
       { name: "description", content: "View and manage your upcoming appointments." },
     ],
   }),
@@ -193,7 +194,7 @@ function MyBookingsPage() {
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
           <span>COMPLETED HISTORY</span>
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
-          <span>SOUTHSIDE BARBERS</span>
+          <span>{BRANDING.name.toUpperCase()}</span>
         </div>
       </div>
 

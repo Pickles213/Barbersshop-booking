@@ -8,14 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/reviews")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Customer Reviews — Southside Barbers" },
-      { name: "description", content: "What our clients say about their experience at Southside Barbers. Authentic, verified feedback." },
-      { property: "og:title", content: "Customer Reviews — Southside Barbers" },
+      { title: `Customer Reviews — ${BRANDING.name}` },
+      { name: "description", content: `What our clients say about their experience at ${BRANDING.name}. Authentic, verified feedback.` },
+      { property: "og:title", content: `Customer Reviews — ${BRANDING.name}` },
       { property: "og:description", content: "What our clients say about their experience. Authentic, verified feedback." },
     ],
   }),
@@ -209,7 +210,7 @@ function ReviewsPage() {
                 [ READY TO BOOK? ]
               </span>
               <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight">
-                EXPERIENCE THE SOUTHSIDE STANDARD.
+                EXPERIENCE THE {BRANDING.shortName.toUpperCase()} STANDARD.
               </h2>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md">
                 Fast online scheduling. Select your specialist, confirm your slot, and secure your time instantly.

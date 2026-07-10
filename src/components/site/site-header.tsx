@@ -3,6 +3,7 @@ import { Scissors, Menu, LogOut, CalendarCheck, ArrowUpRight } from "lucide-reac
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { BRANDING } from "@/config/branding";
 import { Sheet, SheetContent, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -48,12 +49,12 @@ export function SiteHeader() {
           <div className="h-10 w-10 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 transition-transform duration-300 group-hover:scale-105 shrink-0">
             <img src="/logo.jpg" alt="Logo" className="h-full w-full object-cover animate-none" />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col text-left">
             <span className="text-xl font-extrabold tracking-tighter uppercase leading-none">
-              Southside
+              {BRANDING.shortName}
             </span>
             <span className="text-[10px] font-semibold tracking-[0.25em] text-zinc-500 uppercase mt-0.5">
-              Barbershop
+              {BRANDING.tagline}
             </span>
           </div>
         </Link>

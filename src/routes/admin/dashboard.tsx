@@ -12,11 +12,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPHP } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { BookingReceiptDialog } from "@/components/admin/booking-receipt-dialog";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard · Southside Barbers" },
+      { title: `Admin Dashboard · ${BRANDING.name}` },
       { name: "description", content: "Overview of bookings, revenue and barber performance." },
     ],
   }),
@@ -77,7 +78,7 @@ function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader title="Dashboard" subtitle="Here's what's happening at Southside Barbers today" />
+      <DashboardHeader title="Dashboard" subtitle={`Here's what's happening at ${BRANDING.name} today`} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

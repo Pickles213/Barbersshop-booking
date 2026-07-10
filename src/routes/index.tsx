@@ -9,6 +9,7 @@ import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, fetchBarbers, fetchShopSettings } from "@/lib/customer-api";
 import { cn, formatTime, formatPhoneNumber } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { BRANDING } from "@/config/branding";
 import {
   Dialog,
   DialogContent,
@@ -21,15 +22,15 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Southside Barbers" },
+      { title: BRANDING.name },
       {
         name: "description",
-        content: "Precision cuts, hot-towel shaves and modern styling. Book your appointment online without unnecessary waiting.",
+        content: `Precision cuts, hot-towel shaves and modern styling at ${BRANDING.name}. Book your appointment online without unnecessary waiting.`,
       },
-      { property: "og:title", content: "Southside Barbers" },
+      { property: "og:title", content: BRANDING.name },
       {
         property: "og:description",
-        content: "Precision cuts, hot-towel shaves and modern styling. Book online without unnecessary waiting.",
+        content: `Precision cuts, hot-towel shaves and modern styling at ${BRANDING.name}. Book online without unnecessary waiting.`,
       },
     ],
   }),
@@ -156,11 +157,11 @@ function HomePage() {
           {/* Massive Editorial Headline */}
           <div className="my-6">
             <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-black tracking-tighter uppercase leading-[0.88] select-none text-black dark:text-white">
-              SOUTHSIDE
+              {BRANDING.shortName.toUpperCase()}
             </h1>
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-4">
               <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-black tracking-tighter uppercase leading-[0.88] select-none text-zinc-400 dark:text-zinc-600">
-                BARBERS.
+                {BRANDING.tagline.toUpperCase()}.
               </h1>
               <p className="max-w-md text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed pb-3">
                 We understand the pace of the city and the needs of its residents. We offer high-quality grooming at an affordable price, without unnecessary waiting. Precision, experience, and results that speak for themselves.
@@ -282,14 +283,14 @@ function HomePage() {
                 [ ABOUT US ]
               </span>
               <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight leading-none">
-                SOUTHSIDE IS A MODERN BARBERSHOP NETWORK.
+                {BRANDING.name.toUpperCase()} IS A MODERN BARBERSHOP NETWORK.
               </h2>
               <div className="space-y-4 text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-light leading-relaxed">
                 <p>
                   Since our inception, we have been building the most premier grooming destination in the city. From a single neighborhood chair, we have created a recognizable standard present for men who value their time and appearance.
                 </p>
                 <p>
-                  Everywhere we welcome our clients the exact same way — with a sharp eye, professional technique, and flawless consistency. Growth and belief in people are the foundations of Southside Barbers.
+                  Everywhere we welcome our clients the exact same way — with a sharp eye, professional technique, and flawless consistency. Growth and belief in people are the foundations of {BRANDING.name}.
                 </p>
               </div>
 
@@ -328,7 +329,7 @@ function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
-                  [ SOUTHSIDE BARBERS · CAVITE ]
+                  [ {BRANDING.name.toUpperCase()} · {BRANDING.branches[1]?.name.toUpperCase() || "BRANCH"} ]
                 </div>
               </div>
             </div>
@@ -366,7 +367,7 @@ function HomePage() {
                 />
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
-                  [ SOUTHSIDE BARBERS · CAVITE ]
+                  [ {BRANDING.name.toUpperCase()} · {BRANDING.branches[1]?.name.toUpperCase() || "BRANCH"} ]
                 </div>
               </div>
             </div>
@@ -505,7 +506,7 @@ function HomePage() {
                 />
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
-                  [ SOUTHSIDE BARBERS · CAVITE ]
+                  [ {BRANDING.name.toUpperCase()} · {BRANDING.branches[1]?.name.toUpperCase() || "BRANCH"} ]
                 </div>
               </div>
             </div>

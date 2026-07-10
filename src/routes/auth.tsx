@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { BRANDING } from "@/config/branding";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -209,7 +210,7 @@ function AuthPage() {
           <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Scissors className="h-6 w-6" />
           </div>
-          <CardTitle>Southside Barbers Admin</CardTitle>
+          <CardTitle>{BRANDING.name} Admin</CardTitle>
           <CardDescription>
             {view === "verify"
               ? "Enter the code we emailed you"

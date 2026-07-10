@@ -5,14 +5,15 @@ import { ArrowUpRight } from "lucide-react";
 import { SiteLayout } from "@/components/site/site-layout";
 import { fetchServices, type Service } from "@/lib/customer-api";
 import { cn } from "@/lib/utils";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/services")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Price List & Services — Southside Barbers" },
+      { title: `Price List & Services — ${BRANDING.name}` },
       { name: "description", content: "Transparent pricing, skilled barbers. Pick a service and book online in seconds." },
-      { property: "og:title", content: "Price List & Services — Southside Barbers" },
+      { property: "og:title", content: `Price List & Services — ${BRANDING.name}` },
       { property: "og:description", content: "Transparent pricing, skilled barbers. Pick a service and book online in seconds." },
     ],
   }),

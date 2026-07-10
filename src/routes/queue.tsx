@@ -8,12 +8,13 @@ import { SiteLayout } from "@/components/site/site-layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/queue")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Live Queue · Southside Barbers" },
+      { title: `Live Queue · ${BRANDING.name}` },
       { name: "description", content: "See who's being served right now and track your spot in real time." },
     ],
   }),
@@ -206,7 +207,7 @@ function QueuePage() {
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
           <span>WALK-IN TRACKER</span>
           <span className="text-zinc-600 dark:text-zinc-400">•</span>
-          <span>SOUTHSIDE BARBERS</span>
+          <span>{BRANDING.name.toUpperCase()}</span>
         </div>
       </div>
 

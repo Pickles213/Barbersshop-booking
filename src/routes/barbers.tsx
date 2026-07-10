@@ -11,14 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchBarbers, fetchBarberPortfolio, fetchServices, type Barber } from "@/lib/customer-api";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { BRANDING } from "@/config/branding";
 
 export const Route = createFileRoute("/barbers")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Master Barbers — Southside Barbers" },
+      { title: `Master Barbers — ${BRANDING.name}` },
       { name: "description", content: "Meet our master craftsmen. Browse specialties, years of experience and portfolio work." },
-      { property: "og:title", content: "Master Barbers — Southside Barbers" },
+      { property: "og:title", content: `Master Barbers — ${BRANDING.name}` },
       { property: "og:description", content: "Meet our master craftsmen. Browse specialties, years of experience and portfolio work." },
     ],
   }),
@@ -44,7 +45,7 @@ function BarbersPage() {
       <section className="bg-white dark:bg-zinc-950 text-black dark:text-white pt-16 pb-16">
         <div className="mx-auto max-w-7xl px-6 md:px-10">
           <span className="text-xs font-mono font-bold uppercase tracking-[0.25em] text-zinc-500">
-            [ SOUTHSIDE BARBERSHOP TEAM ]
+            [ {BRANDING.name.toUpperCase()} TEAM ]
           </span>
 
           <div className="mt-6 flex flex-col lg:flex-row lg:items-end justify-between gap-8">

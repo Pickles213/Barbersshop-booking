@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { BRANDING } from "@/config/branding";
 
 function NotFoundComponent() {
   return (
@@ -78,15 +79,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Southside Barbers — Booking & Admin" },
-      { name: "description", content: "Southside Barbers — Book appointments, track the live queue, and manage your barbershop operations online." },
-      { name: "author", content: "Southside Barbers" },
-      { property: "og:title", content: "Southside Barbers" },
-      { property: "og:description", content: "Book appointments, track the live queue, and manage your barbershop operations online." },
+      { title: `${BRANDING.name} — Booking & Admin` },
+      { name: "description", content: `${BRANDING.name} — ${BRANDING.description}` },
+      { name: "author", content: BRANDING.author },
+      { property: "og:title", content: BRANDING.name },
+      { property: "og:description", content: BRANDING.description },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Southside Barbers" },
-      { name: "twitter:description", content: "Book appointments, track the live queue, and manage your barbershop operations online." },
+      { name: "twitter:title", content: BRANDING.name },
+      { name: "twitter:description", content: BRANDING.description },
     ],
     links: [
       {
