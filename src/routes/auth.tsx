@@ -14,6 +14,13 @@ import {
   InputOTP, InputOTPGroup, InputOTPSlot,
 } from "@/components/ui/input-otp";
 
+// Always redirect back to the deployed app, not whatever origin opened the login page.
+// Set VITE_APP_URL in your Vercel environment variables to your production URL.
+// Falls back to the current origin so local dev still works.
+const APP_ORIGIN =
+  (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/$/, "") ??
+  (typeof window !== "undefined" ? window.location.origin : "");
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: z.object({ redirect: z.string().optional() }),
@@ -56,7 +63,7 @@ function AuthPage() {
         provider: 'google',
         options: {
           // Redirect to auth to trigger the logic below
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${APP_ORIGIN}/auth`,
           queryParams: {
             prompt: 'select_account',
           },
@@ -112,7 +119,18 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      // "Invalid login credentials" is also returned when the account exists but
+      // was created with Google (no password set). Give a helpful hint.
+      if (error.message.toLowerCase().includes("invalid login credentials")) {
+        toast.error(
+          "Couldn't sign in. If you signed up with Google, use the \"Continue with Google\" button above instead.",
+          { duration: 6000 }
+        );
+        return;
+      }
+      return toast.error(error.message);
+    }
     toast.success("Welcome back!");
     await goAfterAuth();
   };
@@ -131,7 +149,7 @@ function AuthPage() {
       password,
       options: {
         data: { phone: normalizedPhone },
-        emailRedirectTo: `${window.location.origin}/auth`, // Ensure they come back here to verify
+        emailRedirectTo: `${APP_ORIGIN}/auth`, // Ensure they come back here to verify
       },
     });
     setLoading(false);
