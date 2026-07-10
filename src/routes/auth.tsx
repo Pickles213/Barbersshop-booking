@@ -77,24 +77,18 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return;
-
-      // Fetch the role for the user who just signed in
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
-
-      const role = roleData?.role;
-
-      // Navigate based on role
-      if (role === 'admin') {
-        navigate({ to: "/admin/dashboard" });
-      } else {
-        navigate({ to: "/my-bookings" });
+      if (data.user) {
+        await goAfterAuth();
       }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await goAfterAuth();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const goAfterAuth = async () => {
