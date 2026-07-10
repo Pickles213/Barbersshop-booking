@@ -32,6 +32,19 @@ AS $$
 DECLARE
   target_barber_id UUID;
   new_rating NUMERIC;
+END;
+$$;
+-- Note: Replaced in next statements to prevent parsing problems, actual function follows.
+
+CREATE OR REPLACE FUNCTION public.recalculate_barber_rating()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  target_barber_id UUID;
+  new_rating NUMERIC;
 BEGIN
   target_barber_id := COALESCE(NEW.barber_id, OLD.barber_id);
 
@@ -73,3 +86,30 @@ SET rating = COALESCE(
   (SELECT ROUND(AVG(r.rating)::numeric, 2) FROM public.reviews r WHERE r.barber_id = b.id),
   5.0
 );
+
+-- 7. Update get_barber_reviews function to support walk-ins (which have booking_id as NULL)
+CREATE OR REPLACE FUNCTION public.get_barber_reviews(p_barber_id uuid)
+RETURNS TABLE (
+  id uuid,
+  created_at timestamptz,
+  rating integer,
+  comment text,
+  customer_name text,
+  service_name text
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT 
+    r.id,
+    r.created_at,
+    r.rating,
+    r.comment,
+    r.customer_name,
+    r.service_name
+  FROM public.reviews r
+  WHERE r.barber_id = p_barber_id
+  ORDER BY r.created_at DESC;
+$$;
