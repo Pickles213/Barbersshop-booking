@@ -112,6 +112,30 @@ function BookPage() {
     queryFn: async () => (await supabase.from("holidays").select("*").order("holiday_date")).data ?? [],
   });
 
+  // Fetch time off/leaves for the selected barber to show availability in calendar
+  const { data: timeOff = [] } = useQuery({
+    queryKey: ["time-off-slots", barberId],
+    queryFn: async () => {
+      try {
+        if (!barberId || barberId === ANY_BARBER) return [];
+        // Query only public allowed columns to avoid column-level RLS privilege errors
+        const { data, error } = await supabase
+          .from("time_off")
+          .select("id, barber_id, start_date, end_date")
+          .eq("barber_id", barberId);
+        if (error) {
+          console.warn("[Supabase] Failed to fetch barber time off:", error);
+          return [];
+        }
+        return data || [];
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+    enabled: !!barberId && barberId !== ANY_BARBER,
+  });
+
   // Fetch categories linked to the selected barber (if any)
   const { data: barberCategories = [] } = useQuery({
     queryKey: ["barber-categories-ids", barberId],
@@ -236,6 +260,11 @@ function BookPage() {
   const currentHoliday = useMemo(() => {
     return (holidays.data ?? []).find((h: any) => h.holiday_date === dateStr);
   }, [holidays.data, dateStr]);
+
+  const isSelectedBarberOnLeave = useMemo(() => {
+    if (!dateStr || !barberId || barberId === ANY_BARBER) return false;
+    return timeOff.some((t: any) => t.start_date <= dateStr && t.end_date >= dateStr);
+  }, [timeOff, dateStr, barberId]);
 
   // Generate 60 visible days (approx. 2 months)
   const visibleDates = useMemo(() => {
@@ -622,7 +651,10 @@ function BookPage() {
                                 today.setHours(0, 0, 0, 0);
                                 if (d < today) return true;
                                 const formattedD = format(d, "yyyy-MM-dd");
-                                return (holidays.data ?? []).some((h: any) => h.holiday_date === formattedD);
+                                const isHoliday = (holidays.data ?? []).some((h: any) => h.holiday_date === formattedD);
+                                if (isHoliday) return true;
+                                const isOnLeave = timeOff.some((t: any) => t.start_date <= formattedD && t.end_date >= formattedD);
+                                return isOnLeave;
                               }}
                               initialFocus
                               className="p-0 border-0"
@@ -662,11 +694,13 @@ function BookPage() {
                     const isSel = date && formattedD === format(date, "yyyy-MM-dd");
                     const isToday = formattedD === format(new Date(), "yyyy-MM-dd");
                     const holiday = (holidays.data ?? []).find((h: any) => h.holiday_date === formattedD);
+                    const isOnLeave = timeOff.some((t: any) => t.start_date <= formattedD && t.end_date >= formattedD);
 
                     return (
                       <button
                         key={d.toISOString()}
                         type="button"
+                        disabled={!!holiday || isOnLeave}
                         onClick={() => {
                           setDate(d);
                           setSlot(null);
@@ -676,9 +710,11 @@ function BookPage() {
                           isSel
                             ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white scale-95 shadow-md font-bold"
                             : holiday
-                            ? "bg-red-50/30 dark:bg-red-950/10 border-red-200/60 dark:border-red-900/40 text-red-500/80 dark:text-red-400"
+                            ? "bg-red-50/30 dark:bg-red-950/10 border-red-200/60 dark:border-red-900/40 text-red-500/80 dark:text-red-400 cursor-not-allowed opacity-60"
+                            : isOnLeave
+                            ? "bg-amber-50/30 dark:bg-amber-950/10 border-amber-250/60 dark:border-amber-900/40 text-amber-600 dark:text-amber-400 cursor-not-allowed opacity-60"
                             : "bg-zinc-50 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800/80 text-zinc-850 dark:text-zinc-200 hover:border-black dark:hover:border-white",
-                          isToday && !isSel && !holiday && "border-zinc-400 dark:border-zinc-650",
+                          isToday && !isSel && !holiday && !isOnLeave && "border-zinc-400 dark:border-zinc-650",
                         )}
                       >
                         <span className="text-[10px] font-mono uppercase tracking-wider opacity-60">
@@ -688,7 +724,7 @@ function BookPage() {
                           {format(d, "d")}
                         </span>
                         <span className="text-[10px] font-mono uppercase tracking-wider opacity-60 font-black">
-                          {holiday ? "CLOSED" : format(d, "MMM")}
+                          {holiday ? "CLOSED" : isOnLeave ? "ON LEAVE" : format(d, "MMM")}
                         </span>
                       </button>
                     );
@@ -728,7 +764,21 @@ function BookPage() {
                     </div>
                   )}
 
-                  {date && !slots.isLoading && !currentHoliday && filteredSlots.length === 0 && (
+                  {date && !slots.isLoading && !currentHoliday && isSelectedBarberOnLeave && (
+                    <div className="text-center py-10 border-2 border-dashed border-amber-200 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-950/10 rounded-3xl p-6">
+                      <p className="text-xs font-mono text-amber-600 dark:text-amber-400 uppercase tracking-widest font-black">
+                        [ BARBER ON LEAVE ]
+                      </p>
+                      <p className="text-lg font-extrabold uppercase mt-2 text-black dark:text-white">
+                        {barber ? barber.name : "Barber"} is on leave
+                      </p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-2">
+                        Please select another date using the scrollbar or calendar.
+                      </p>
+                    </div>
+                  )}
+
+                  {date && !slots.isLoading && !currentHoliday && !isSelectedBarberOnLeave && filteredSlots.length === 0 && (
                     <div className="text-center py-10 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-6">
                       <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
                         No Slots Available Today
