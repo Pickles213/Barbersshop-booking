@@ -128,6 +128,7 @@ export type Database = {
           name: string
           rating: number
           specialization: string | null
+          user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -139,6 +140,7 @@ export type Database = {
           name: string
           rating?: number
           specialization?: string | null
+          user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -150,8 +152,171 @@ export type Database = {
           name?: string
           rating?: number
           specialization?: string | null
+          user_id?: string | null
         }
         Relationships: []
+      }
+      permissions: {
+        Row: {
+          category: string
+          description: string | null
+          key: string
+          label: string
+        }
+        Insert: {
+          category: string
+          description?: string | null
+          key: string
+          label: string
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          key?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      user_permission_overrides: {
+        Row: {
+          granted: boolean
+          granted_by: string | null
+          permission_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          granted: boolean
+          granted_by?: string | null
+          permission_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          granted?: boolean
+          granted_by?: string | null
+          permission_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permission_overrides_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_system: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      role_permission_assignments: {
+        Row: {
+          permission_key: string
+          role_id: string
+        }
+        Insert: {
+          permission_key: string
+          role_id: string
+        }
+        Update: {
+          permission_key?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permission_assignments_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "role_permission_assignments_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_role_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_role_assignments_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bookings: {
         Row: {
@@ -646,6 +811,25 @@ export type Database = {
           status: Database["public"]["Enums"]["walkin_status"]
         }[]
       }
+      has_permission: {
+        Args: {
+          _permission_key: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      get_my_permissions: {
+        Args: never
+        Returns: string[]
+      }
+      get_my_roles: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          description: string | null
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -698,7 +882,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff"
+      app_role: "admin" | "staff" | "barber"
       booking_status:
         | "pending"
         | "confirmed"
@@ -834,7 +1018,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      app_role: ["admin", "staff", "barber"],
       booking_status: [
         "pending",
         "confirmed",

@@ -7,11 +7,13 @@ import {
   Users,
   CalendarCheck,
   CalendarClock,
+  CalendarDays,
   Footprints,
   BarChart3,
   Settings,
   LogOut,
   ScrollText,
+  Shield,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -37,8 +39,10 @@ const groups = [
     label: "Operations",
     items: [
       { title: "Bookings", url: "/admin/bookings", icon: CalendarCheck },
+      { title: "Calendar", url: "/admin/calendar", icon: CalendarDays },
       { title: "Walk-ins", url: "/admin/walk-ins", icon: Footprints },
       { title: "Barbers", url: "/admin/barbers", icon: Users },
+      { title: "Roles", url: "/admin/roles", icon: Shield },
       { title: "Schedules", url: "/admin/schedules", icon: CalendarClock },
       { title: "Services", url: "/admin/services", icon: Scissors },
     ],
