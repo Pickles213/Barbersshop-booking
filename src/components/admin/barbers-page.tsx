@@ -1,6 +1,6 @@
 import { useRef, useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Star, Trash2, ImagePlus, Upload, Loader2 } from "lucide-react";
+import { Pencil, Plus, Star, Trash2, ImagePlus, Upload, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 import { DashboardHeader } from "./dashboard-header";
@@ -18,15 +18,17 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 type Barber = {
   id: string; name: string; specialization: string | null; experience_years: number;
   bio: string | null; rating: number; avatar_url: string | null; is_active: boolean;
+  user_id: string | null;
 };
 type PortfolioItem = { id: string; barber_id: string; image_url: string };
 
 const empty: Omit<Barber, "id"> = {
-  name: "", specialization: "", experience_years: 0, bio: "", rating: 5, avatar_url: "", is_active: true,
+  name: "", specialization: "", experience_years: 0, bio: "", rating: 5, avatar_url: "", is_active: true, user_id: null,
 };
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -63,6 +65,74 @@ export function BarbersPage() {
   const [portfolioUploading, setPortfolioUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
+
+  // States for role assignment
+  const [assigningRolesFor, setAssigningRolesFor] = useState<Barber | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]); // list of role_ids
+
+  // Queries for roles and assignments
+  const { data: roles = [] } = useQuery<any[]>({
+    queryKey: ["roles-list-admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("roles").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: userRoleAssignments = [] } = useQuery<any[]>({
+    queryKey: ["user-role-assignments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("user_role_assignments").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Mutation to update user role assignments
+  const updateBarberRoles = useMutation({
+    mutationFn: async () => {
+      if (!assigningRolesFor || !assigningRolesFor.user_id) return;
+      const userId = assigningRolesFor.user_id;
+
+      // Current assignments in database
+      const currentRoleIds = userRoleAssignments
+        .filter((a) => a.user_id === userId)
+        .map((a) => a.role_id);
+
+      const toAdd = selectedRoles.filter((id) => !currentRoleIds.includes(id));
+      const toDelete = currentRoleIds.filter((id) => !selectedRoles.includes(id));
+
+      if (toAdd.length > 0) {
+        const { error } = await supabase
+          .from("user_role_assignments")
+          .insert(
+            toAdd.map((roleId) => ({
+              user_id: userId,
+              role_id: roleId,
+            }))
+          );
+        if (error) throw error;
+      }
+
+      if (toDelete.length > 0) {
+        const { error } = await supabase
+          .from("user_role_assignments")
+          .delete()
+          .eq("user_id", userId)
+          .in("role_id", toDelete);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Barber roles updated successfully");
+      setAssigningRolesFor(null);
+      qc.invalidateQueries({ queryKey: ["user-role-assignments"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update roles");
+    },
+  });
 
   const { data: services = [] } = useQuery({
     queryKey: ["services-raw"],
@@ -209,6 +279,7 @@ export function BarbersPage() {
     setForm({
       name: b.name, specialization: b.specialization ?? "", experience_years: b.experience_years,
       bio: b.bio ?? "", rating: b.rating, avatar_url: b.avatar_url ?? "", is_active: b.is_active,
+      user_id: b.user_id,
     });
     setAvatarFile(null);
     setAvatarPreview(b.avatar_url ?? null);
@@ -266,6 +337,20 @@ export function BarbersPage() {
                       <span className="text-muted-foreground">{b.experience_years} yrs</span>
                       {!b.is_active && <Badge variant="secondary">Inactive</Badge>}
                     </div>
+                    {b.user_id && (
+                      <div className="mt-2 flex flex-wrap gap-1 font-mono">
+                        {userRoleAssignments
+                          .filter((a) => a.user_id === b.user_id)
+                          .map((a) => {
+                            const r = roles.find((role) => role.id === a.role_id);
+                            return r ? (
+                              <Badge key={r.id} variant="secondary" className="text-[9px] uppercase px-1.5 py-0.5">
+                                {r.name}
+                              </Badge>
+                            ) : null;
+                          })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -280,15 +365,59 @@ export function BarbersPage() {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between gap-2">
-                <Button size="sm" variant="outline" onClick={() => setPortfolioOf(b)}>
-                  <ImagePlus className="mr-2 h-4 w-4" />Portfolio ({pics.length})
-                </Button>
-                <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => startEdit(b)}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Delete ${b.name}?`)) remove.mutate(b.id); }}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              <CardFooter className="flex flex-col gap-3 border-t pt-3 mt-3">
+                <div className="flex w-full justify-between items-center gap-2">
+                  <div className="flex gap-1.5">
+                    {b.user_id ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs font-mono h-8 px-2.5"
+                        onClick={() => {
+                          setAssigningRolesFor(b);
+                          const current = userRoleAssignments
+                            .filter((a) => a.user_id === b.user_id)
+                            .map((a) => a.role_id);
+                          setSelectedRoles(current);
+                        }}
+                      >
+                        <Shield className="mr-1.5 h-3.5 w-3.5 text-sky-500" />
+                        Roles
+                      </Button>
+                    ) : (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-block">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs font-mono h-8 px-2.5 opacity-55 cursor-not-allowed"
+                                disabled
+                              >
+                                <Shield className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                                Roles
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="font-mono">
+                            Link this barber to a login before assigning roles
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+
+                    <Button size="sm" variant="outline" className="text-xs font-mono h-8 px-2.5" onClick={() => setPortfolioOf(b)}>
+                      <ImagePlus className="mr-1.5 h-3.5 w-3.5" />Portfolio ({pics.length})
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-0.5 shrink-0">
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(b)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => { if (confirm(`Delete ${b.name}?`)) remove.mutate(b.id); }}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardFooter>
             </Card>
@@ -424,6 +553,63 @@ export function BarbersPage() {
             ))}
           </div>
         </DialogContent>
+      </Dialog>
+
+      {/* Manage Roles Dialog */}
+      <Dialog open={!!assigningRolesFor} onOpenChange={(open) => !open && setAssigningRolesFor(null)}>
+        {assigningRolesFor && (
+          <DialogContent className="sm:max-w-md font-mono">
+            <DialogHeader>
+              <DialogTitle>Manage Roles: {assigningRolesFor.name}</DialogTitle>
+              <DialogDescription>
+                Assign or revoke roles for this barber. User account: <span className="font-mono text-zinc-600 dark:text-zinc-400">{assigningRolesFor.user_id}</span>
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-3">
+              <Label className="text-sm font-bold">Available Roles</Label>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded p-3 bg-muted/10">
+                {roles.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No roles configured in the system.</p>
+                ) : (
+                  roles.map((r) => {
+                    const checked = selectedRoles.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          if (checked) {
+                            setSelectedRoles(selectedRoles.filter((id) => id !== r.id));
+                          } else {
+                            setSelectedRoles([...selectedRoles, r.id]);
+                          }
+                        }}
+                        className="flex items-start gap-2.5 text-left text-xs font-mono cursor-pointer hover:bg-muted/60 p-2 rounded transition-colors w-full"
+                      >
+                        <span className="text-sky-600 dark:text-sky-400 font-bold shrink-0">
+                          {checked ? "[✓]" : "[ ]"}
+                        </span>
+                        <div className="min-w-0 leading-tight">
+                          <span className="font-semibold block uppercase text-xs">{r.name}</span>
+                          {r.description && <span className="text-[10px] text-muted-foreground line-clamp-1">{r.description}</span>}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAssigningRolesFor(null)}>Cancel</Button>
+              <Button onClick={() => updateBarberRoles.mutate()} disabled={updateBarberRoles.isPending}>
+                {updateBarberRoles.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
       </Dialog>
     </div>
   );

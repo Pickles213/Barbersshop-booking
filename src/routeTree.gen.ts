@@ -17,6 +17,8 @@ import { Route as MyBookingsRouteImport } from './routes/my-bookings'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as BarbersRouteImport } from './routes/barbers'
+import { Route as BarberTestRouteImport } from './routes/barber-test'
+import { Route as BarberRouteImport } from './routes/barber'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,9 +27,11 @@ import { Route as AdminWalkInsRouteImport } from './routes/admin/walk-ins'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminServicesRouteImport } from './routes/admin/services'
 import { Route as AdminSchedulesRouteImport } from './routes/admin/schedules'
+import { Route as AdminRolesRouteImport } from './routes/admin/roles'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminCalendarRouteImport } from './routes/admin/calendar'
 import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
 import { Route as AdminBarbersRouteImport } from './routes/admin/barbers'
 import { Route as AdminAuditLogsRouteImport } from './routes/admin/audit-logs'
@@ -72,6 +76,16 @@ const BarbersRoute = BarbersRouteImport.update({
   path: '/barbers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BarberTestRoute = BarberTestRouteImport.update({
+  id: '/barber-test',
+  path: '/barber-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BarberRoute = BarberRouteImport.update({
+  id: '/barber',
+  path: '/barber',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -112,6 +126,11 @@ const AdminSchedulesRoute = AdminSchedulesRouteImport.update({
   path: '/schedules',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -125,6 +144,11 @@ const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCalendarRoute = AdminCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminBookingsRoute = AdminBookingsRouteImport.update({
@@ -147,6 +171,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/barber': typeof BarberRoute
+  '/barber-test': typeof BarberTestRoute
   '/barbers': typeof BarbersRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
@@ -158,9 +184,11 @@ export interface FileRoutesByFullPath {
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/admin/schedules': typeof AdminSchedulesRoute
   '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -170,6 +198,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/barber': typeof BarberRoute
+  '/barber-test': typeof BarberTestRoute
   '/barbers': typeof BarbersRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
@@ -181,9 +211,11 @@ export interface FileRoutesByTo {
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/admin/schedules': typeof AdminSchedulesRoute
   '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -195,6 +227,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/barber': typeof BarberRoute
+  '/barber-test': typeof BarberTestRoute
   '/barbers': typeof BarbersRoute
   '/book': typeof BookRoute
   '/contact': typeof ContactRoute
@@ -206,9 +240,11 @@ export interface FileRoutesById {
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/barbers': typeof AdminBarbersRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/admin/schedules': typeof AdminSchedulesRoute
   '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -221,6 +257,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/barber'
+    | '/barber-test'
     | '/barbers'
     | '/book'
     | '/contact'
@@ -232,9 +270,11 @@ export interface FileRouteTypes {
     | '/admin/audit-logs'
     | '/admin/barbers'
     | '/admin/bookings'
+    | '/admin/calendar'
     | '/admin/dashboard'
     | '/admin/notifications'
     | '/admin/reports'
+    | '/admin/roles'
     | '/admin/schedules'
     | '/admin/services'
     | '/admin/settings'
@@ -244,6 +284,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/barber'
+    | '/barber-test'
     | '/barbers'
     | '/book'
     | '/contact'
@@ -255,9 +297,11 @@ export interface FileRouteTypes {
     | '/admin/audit-logs'
     | '/admin/barbers'
     | '/admin/bookings'
+    | '/admin/calendar'
     | '/admin/dashboard'
     | '/admin/notifications'
     | '/admin/reports'
+    | '/admin/roles'
     | '/admin/schedules'
     | '/admin/services'
     | '/admin/settings'
@@ -268,6 +312,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/barber'
+    | '/barber-test'
     | '/barbers'
     | '/book'
     | '/contact'
@@ -279,9 +325,11 @@ export interface FileRouteTypes {
     | '/admin/audit-logs'
     | '/admin/barbers'
     | '/admin/bookings'
+    | '/admin/calendar'
     | '/admin/dashboard'
     | '/admin/notifications'
     | '/admin/reports'
+    | '/admin/roles'
     | '/admin/schedules'
     | '/admin/services'
     | '/admin/settings'
@@ -293,6 +341,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BarberRoute: typeof BarberRoute
+  BarberTestRoute: typeof BarberTestRoute
   BarbersRoute: typeof BarbersRoute
   BookRoute: typeof BookRoute
   ContactRoute: typeof ContactRoute
@@ -361,6 +411,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BarbersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/barber-test': {
+      id: '/barber-test'
+      path: '/barber-test'
+      fullPath: '/barber-test'
+      preLoaderRoute: typeof BarberTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/barber': {
+      id: '/barber'
+      path: '/barber'
+      fullPath: '/barber'
+      preLoaderRoute: typeof BarberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -417,6 +481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSchedulesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
@@ -436,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/calendar': {
+      id: '/admin/calendar'
+      path: '/calendar'
+      fullPath: '/admin/calendar'
+      preLoaderRoute: typeof AdminCalendarRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/bookings': {
@@ -466,9 +544,11 @@ interface AdminRouteRouteChildren {
   AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminBarbersRoute: typeof AdminBarbersRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminCalendarRoute: typeof AdminCalendarRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminReportsRoute: typeof AdminReportsRoute
+  AdminRolesRoute: typeof AdminRolesRoute
   AdminSchedulesRoute: typeof AdminSchedulesRoute
   AdminServicesRoute: typeof AdminServicesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -480,9 +560,11 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminBarbersRoute: AdminBarbersRoute,
   AdminBookingsRoute: AdminBookingsRoute,
+  AdminCalendarRoute: AdminCalendarRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminReportsRoute: AdminReportsRoute,
+  AdminRolesRoute: AdminRolesRoute,
   AdminSchedulesRoute: AdminSchedulesRoute,
   AdminServicesRoute: AdminServicesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
@@ -498,6 +580,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BarberRoute: BarberRoute,
+  BarberTestRoute: BarberTestRoute,
   BarbersRoute: BarbersRoute,
   BookRoute: BookRoute,
   ContactRoute: ContactRoute,
