@@ -384,6 +384,51 @@ export type Database = {
           },
         ]
       }
+      booking_services: {
+        Row: {
+          booking_id: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          price: number
+          service_id: string | null
+          service_name: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          price?: number
+          service_id?: string | null
+          service_name: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          price?: number
+          service_id?: string | null
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_services_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holidays: {
         Row: {
           created_at: string
@@ -461,6 +506,8 @@ export type Database = {
       }
       reviews: {
         Row: {
+          barber_id: string | null
+          barber_name: string | null
           booking_id: string | null
           comment: string | null
           created_at: string
@@ -471,6 +518,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          barber_id?: string | null
+          barber_name?: string | null
           booking_id?: string | null
           comment?: string | null
           created_at?: string
@@ -481,6 +530,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          barber_id?: string | null
+          barber_name?: string | null
           booking_id?: string | null
           comment?: string | null
           created_at?: string
@@ -491,6 +542,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]
@@ -570,46 +628,73 @@ export type Database = {
       }
       shop_settings: {
         Row: {
+          about_image_url: string | null
+          about_video_url: string | null
           close_time: string
+          facebook_url: string | null
+          hero_slideshow: string[] | null
           id: number
+          instagram_url: string | null
+          mission_video_url: string | null
           open_time: string
           payment_card: boolean
           payment_cash: boolean
           payment_gcash: boolean
           payment_maya: boolean
+          services_image_url: string | null
           shop_address: string | null
           shop_email: string | null
           shop_name: string
           shop_phone: string | null
+          tiktok_url: string | null
           updated_at: string
+          x_url: string | null
         }
         Insert: {
+          about_image_url?: string | null
+          about_video_url?: string | null
           close_time?: string
+          facebook_url?: string | null
+          hero_slideshow?: string[] | null
           id?: number
+          instagram_url?: string | null
+          mission_video_url?: string | null
           open_time?: string
           payment_card?: boolean
           payment_cash?: boolean
           payment_gcash?: boolean
           payment_maya?: boolean
+          services_image_url?: string | null
           shop_address?: string | null
           shop_email?: string | null
           shop_name?: string
           shop_phone?: string | null
+          tiktok_url?: string | null
           updated_at?: string
+          x_url?: string | null
         }
         Update: {
+          about_image_url?: string | null
+          about_video_url?: string | null
           close_time?: string
+          facebook_url?: string | null
+          hero_slideshow?: string[] | null
           id?: number
+          instagram_url?: string | null
+          mission_video_url?: string | null
           open_time?: string
           payment_card?: boolean
           payment_cash?: boolean
           payment_gcash?: boolean
           payment_maya?: boolean
+          services_image_url?: string | null
           shop_address?: string | null
           shop_email?: string | null
           shop_name?: string
           shop_phone?: string | null
+          tiktok_url?: string | null
           updated_at?: string
+          x_url?: string | null
         }
         Relationships: []
       }
@@ -818,6 +903,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_barber_reviews: {
+        Args: {
+          p_barber_id: string
+        }
+        Returns: {
+          id: string
+          created_at: string
+          rating: number
+          comment: string | null
+          customer_name: string
+          service_name: string
+        }[]
+      }
+      get_barber_stats: {
+        Args: {
+          p_barber_id: string
+        }
+        Returns: {
+          appointments_completed: number
+          clients_served: number
+        }[]
+      }
       get_my_permissions: {
         Args: never
         Returns: string[]
@@ -854,7 +961,7 @@ export type Database = {
           p_customer_name: string
           p_customer_phone: string
           p_notes?: string
-          p_service_id: string
+          p_service_ids: string[]
           p_start_time: string
         }
         Returns: {

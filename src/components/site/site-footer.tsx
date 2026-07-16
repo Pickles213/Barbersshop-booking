@@ -1,10 +1,23 @@
 import { Link } from "@tanstack/react-router";
-import { Scissors, ArrowUpRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Scissors, ArrowUpRight, Facebook, Instagram, Twitter, Music2 } from "lucide-react";
 import { BRANDING } from "@/config/branding";
 
+import { fetchShopSettings } from "@/lib/customer-api";
+
+const SOCIAL_LINKS = [
+  { key: "facebook_url" as const, label: "Facebook", Icon: Facebook },
+  { key: "instagram_url" as const, label: "Instagram", Icon: Instagram },
+  { key: "tiktok_url" as const, label: "TikTok", Icon: Music2 },
+  { key: "x_url" as const, label: "X", Icon: Twitter },
+];
+
 export function SiteFooter() {
+  const { data: shop } = useQuery({ queryKey: ["shop"], queryFn: fetchShopSettings });
+  const activeSocials = SOCIAL_LINKS.filter(({ key }) => shop?.[key]);
+
   return (
-    <footer className="mt-32 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-white">
+    <footer className="mt-16 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-white">
       <div className="mx-auto max-w-7xl px-6 py-16 md:px-10">
         <div className="grid gap-12 md:grid-cols-4 justify-between">
           {/* Brand Col */}
@@ -33,6 +46,30 @@ export function SiteFooter() {
                 BOOK YOUR HAIRCUT TODAY <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
               </Link>
             </div>
+            {activeSocials.length > 0 && (
+              <div className="flex gap-3 pt-2">
+                {activeSocials.map(({ key, label, Icon }) => (
+                  <a
+                    key={key}
+                    href={shop![key]!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={`grid h-9 w-9 place-items-center rounded-lg border transition-all ${
+                      key === "facebook_url"
+                        ? "bg-[#1877F2] text-white border-transparent hover:scale-110"
+                        : key === "instagram_url"
+                        ? "bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white border-transparent hover:scale-110"
+                        : key === "tiktok_url"
+                        ? "bg-black text-white border-[#00f2fe]/80 shadow-[1.5px_1.5px_0px_#fe0979,-1.5px_-1.5px_0px_#00f2fe] hover:scale-110"
+                        : "bg-black text-white border-zinc-800 hover:scale-110 hover:bg-zinc-900"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Navigation Col */}

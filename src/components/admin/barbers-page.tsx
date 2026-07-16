@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -205,11 +205,12 @@ export function BarbersPage() {
       // rating is never set by the admin — it's calculated from customer reviews
       const { rating: _rating, ...rest } = form;
       const payload = { ...rest, avatar_url };
-      let barberId = editing?.id;
+      let barberId: string;
 
       if (editing) {
         const { error } = await supabase.from("barbers").update(payload).eq("id", editing.id);
         if (error) throw error;
+        barberId = editing.id;
       } else {
         const { data, error } = await supabase.from("barbers").insert(payload).select("id").single();
         if (error) throw error;

@@ -101,31 +101,40 @@ function HomePage() {
 
   const reviewsList = reviewsQuery.data ?? [];
 
+  const slideshowImages = useMemo(() => {
+    const customSlides = shop.data?.hero_slideshow;
+    if (customSlides && customSlides.length > 0) return customSlides;
+    return HERO_IMAGES;
+  }, [shop.data?.hero_slideshow]);
+
   // ── Slideshow state ───────────────────────────────────────────────────────
   const [activeSlide, setActiveSlide] = useState(0);
-  // Only the active slide + the very next one are ever mounted/downloaded —
-  // mounting all 5 (one is >2MB) at once was saturating slow/mobile
-  // connections and surfacing as net::ERR_CONNECTION_RESET / PING_FAILED.
   const [loadedSlides, setLoadedSlides] = useState<Set<number>>(new Set([0]));
 
+  // Reset active slide when slideshow size changes to prevent index out of bounds
   useEffect(() => {
+    setActiveSlide(0);
+    setLoadedSlides(new Set([0]));
+  }, [slideshowImages]);
+
+  useEffect(() => {
+    if (slideshowImages.length <= 1) return;
     const id = setTimeout(() => {
-      const next = (activeSlide + 1) % HERO_IMAGES.length;
+      const next = (activeSlide + 1) % slideshowImages.length;
       setActiveSlide(next);
       setLoadedSlides((prev) => new Set(prev).add(next));
     }, 4500);
     return () => clearTimeout(id);
-  }, [activeSlide]);
+  }, [activeSlide, slideshowImages.length]);
 
   useEffect(() => {
-    // Preload the slide after next while current one is showing, so the
-    // fade transition never waits on a fresh download.
-    const upcoming = (activeSlide + 1) % HERO_IMAGES.length;
+    if (slideshowImages.length <= 1) return;
+    const upcoming = (activeSlide + 1) % slideshowImages.length;
     if (loadedSlides.has(upcoming)) return;
     const img = new Image();
-    img.src = HERO_IMAGES[upcoming];
+    img.src = slideshowImages[upcoming];
     img.onload = () => setLoadedSlides((prev) => new Set(prev).add(upcoming));
-  }, [activeSlide, loadedSlides]);
+  }, [activeSlide, loadedSlides, slideshowImages]);
 
   const featuredServices = (services.data ?? []).slice(0, 6);
   const topBarbers = (barbers.data ?? []).slice(0, 4);
@@ -161,7 +170,7 @@ function HomePage() {
             </h1>
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-4">
               <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-black tracking-tighter uppercase leading-[0.88] select-none text-zinc-400 dark:text-zinc-600">
-                {BRANDING.tagline.toUpperCase()}.
+                {(BRANDING.name.split(" ")[1] || "BARBERS").toUpperCase()}.
               </h1>
               <p className="max-w-md text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed pb-3">
                 We understand the pace of the city and the needs of its residents. We offer high-quality grooming at an affordable price, without unnecessary waiting. Precision, experience, and results that speak for themselves.
@@ -207,7 +216,7 @@ function HomePage() {
 
             {/* Right Box · Slideshow Banner */}
             <div className="lg:col-span-8 relative h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
-              {HERO_IMAGES.map((src, i) =>
+              {slideshowImages.map((src, i) =>
                 loadedSlides.has(i) ? (
                   <img
                     key={src}
@@ -233,7 +242,7 @@ function HomePage() {
                   </h4>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {HERO_IMAGES.map((_, i) => (
+                  {slideshowImages.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveSlide(i)}
@@ -323,7 +332,7 @@ function HomePage() {
             <div className="lg:col-span-5">
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
                 <img
-                  src="/images/img1.jpg"
+                  src={shop.data?.about_image_url || "/images/img1.jpg"}
                   alt="Barbershop Interior"
                   className="w-full h-full object-cover filter contrast-105"
                 />
@@ -360,13 +369,25 @@ function HomePage() {
             {/* Left · Image */}
             <div className="lg:col-span-5">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
-                <img
-                  src="/images/img3.jpg"
-                  alt="Barber Precision Cut"
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs">
+                {shop.data?.mission_video_url ? (
+                  <video
+                    src={shop.data.mission_video_url}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                ) : (
+                  <img
+                    src="/images/img3.jpg"
+                    alt="Barber Precision Cut"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                )}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-6 left-6 right-6 text-white font-mono text-xs z-10 pointer-events-none">
                   [ {BRANDING.name.toUpperCase()} · {BRANDING.branches[1]?.name.toUpperCase() || "BRANCH"} ]
                 </div>
               </div>
@@ -500,7 +521,7 @@ function HomePage() {
             <div className="lg:col-span-4 sticky top-28">
               <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl">
                 <img
-                  src="/images/img2.jpg"
+                  src={shop.data?.services_image_url || "/images/img2.jpg"}
                   alt="Barbershop Service"
                   className="w-full h-full object-cover rounded-2xl contrast-[1.05]"
                 />

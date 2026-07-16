@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookingReceiptDialog } from "@/components/admin/booking-receipt-dialog";
 import { cn, formatTime } from "@/lib/utils";
 
@@ -1123,7 +1124,7 @@ function BarberPortalPage() {
                 <Input value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} />
               </div>
               <div className="col-span-2 space-y-1.5"><Label>Service</Label>
-                <Select value={form.service_id} onValueChange={(v) => {
+                <Select value={form.service_id} onValueChange={(v: string) => {
                   const svc = services.find((s) => s.id === v);
                   setForm({ ...form, service_id: v, price: svc ? Number(svc.price) : form.price });
                 }}>
@@ -1140,7 +1141,7 @@ function BarberPortalPage() {
                 <Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} />
               </div>
               <div className="space-y-1.5"><Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
+                <Select value={form.status} onValueChange={(v: string) => setForm({ ...form, status: v as any })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {["pending", "confirmed", "in_progress", "completed", "cancelled", "no_show"].map((s) => (
