@@ -42,7 +42,7 @@ export const Route = createFileRoute("/barber")({
   component: BarberPortalPage,
 });
 
-type Tab = "calendar" | "bookings" | "schedule" | "reviews";
+type Tab = "calendar" | "bookings" | "schedule" | "reviews" | "earnings";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -162,6 +162,8 @@ function BarberPortalPage() {
         setActiveTab("schedule");
       } else if (hasPerm("reviews.view_own")) {
         setActiveTab("reviews");
+      } else if (hasPerm("commissions.view_own")) {
+        setActiveTab("earnings");
       }
     }
   }, [permissionsQuery.data]);
@@ -180,6 +182,21 @@ function BarberPortalPage() {
       return data;
     },
     enabled: !!barber && (hasPerm("calendar.view") || hasPerm("bookings.view_own")),
+  });
+
+  // Fetch commissions for this barber
+  const commissionsQuery = useQuery({
+    queryKey: ["barber-commissions-list", barber?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("barber_commissions")
+        .select("*, booking:bookings(customer_name, reference), walk_in:walk_ins(customer_name, queue_number)")
+        .eq("barber_id", barber!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!barber && hasPerm("commissions.view_own"),
   });
 
   const bookings = bookingsQuery.data ?? [];
@@ -590,6 +607,20 @@ function BarberPortalPage() {
               )}
             >
               [ REVIEWS ]
+            </button>
+          )}
+
+          {hasPerm("commissions.view_own") && (
+            <button
+              onClick={() => setActiveTab("earnings")}
+              className={cn(
+                "px-3 py-2 text-xs font-bold uppercase transition-all border border-transparent select-none cursor-pointer",
+                activeTab === "earnings"
+                  ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                  : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-muted-foreground"
+              )}
+            >
+              [ EARNINGS &amp; COMMISSIONS ]
             </button>
           )}
         </div>
@@ -1005,6 +1036,98 @@ function BarberPortalPage() {
               )}
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === "earnings" && hasPerm("commissions.view_own") && (
+          <div className="space-y-6">
+            {/* Earnings stats widgets */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-mono uppercase text-muted-foreground">Total Commissions Earned</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black font-mono">
+                    ₱{commissionsQuery.data?.reduce((sum, c) => sum + Number(c.commission_amount), 0).toLocaleString() ?? "0"}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-mono uppercase text-muted-foreground">Total Services Completed</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black font-mono">
+                    {commissionsQuery.data?.length ?? 0}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-mono uppercase text-muted-foreground">Average Earnings Per Cut</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black font-mono">
+                    ₱{commissionsQuery.data && commissionsQuery.data.length > 0
+                      ? Math.round(
+                          commissionsQuery.data.reduce((sum, c) => sum + Number(c.commission_amount), 0) /
+                            commissionsQuery.data.length
+                        ).toLocaleString()
+                      : "0"}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Commissions list */}
+            <Card className="border-zinc-200 dark:border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold uppercase">Commission Ledger</CardTitle>
+                <CardDescription className="text-[10px] font-mono mt-0.5">Historical breakdown of your cut per service completed</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {commissionsQuery.isLoading ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">Loading ledger…</p>
+                ) : !commissionsQuery.data || commissionsQuery.data.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed rounded-lg">
+                    <p className="text-xs text-muted-foreground">No commissions logged yet.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs font-mono text-left">
+                      <thead>
+                        <tr className="border-b border-zinc-200 dark:border-zinc-800 text-muted-foreground pb-2">
+                          <th className="py-2">Date / Time</th>
+                          <th className="py-2">Client / Ref</th>
+                          <th className="py-2 text-right">Gross Price</th>
+                          <th className="py-2 text-right">Your Rate</th>
+                          <th className="py-2 text-right">Your Cut</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commissionsQuery.data.map((c: any) => {
+                          const clientName = c.booking?.customer_name || c.walk_in?.customer_name || "Walk-in Client";
+                          const ref = c.booking?.reference || (c.walk_in?.queue_number ? `Walk-in #${c.walk_in.queue_number}` : "—");
+                          return (
+                            <tr key={c.id} className="border-b border-zinc-150 dark:border-zinc-850 hover:bg-zinc-50 dark:hover:bg-zinc-900/30">
+                              <td className="py-3">{format(new Date(c.created_at), "yyyy-MM-dd HH:mm")}</td>
+                              <td className="py-3">
+                                <div className="font-bold">{clientName}</div>
+                                <div className="text-[10px] text-muted-foreground">{ref}</div>
+                              </td>
+                              <td className="py-3 text-right">₱{Number(c.gross_amount).toLocaleString()}</td>
+                              <td className="py-3 text-right">{c.commission_rate}%</td>
+                              <td className="py-3 text-right font-bold text-emerald-600 dark:text-emerald-400">₱{Number(c.commission_amount).toLocaleString()}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
 

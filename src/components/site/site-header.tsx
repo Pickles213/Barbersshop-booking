@@ -27,13 +27,46 @@ const NAV = [
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setEmail(session?.user?.email ?? null);
+    const fetchUserAndRoles = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setEmail(user.email ?? null);
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
+        if (rolesData) {
+          setRoles(rolesData.map((r: any) => r.role));
+        }
+      } else {
+        setEmail(null);
+        setRoles([]);
+      }
+    };
+
+    fetchUserAndRoles();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, session) => {
+      if (session?.user) {
+        setEmail(session.user.email ?? null);
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+        if (rolesData) {
+          setRoles(rolesData.map((r: any) => r.role));
+        }
+      } else {
+        setEmail(null);
+        setRoles([]);
+      }
     });
+
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -92,12 +125,33 @@ export function SiteHeader() {
               <DropdownMenuContent align="end" className="w-56 font-sans">
                 <DropdownMenuLabel className="truncate text-xs font-mono">{email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                
+                {roles.includes("barber") && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/barber" className="cursor-pointer font-medium">
+                      <Scissors className="mr-2 h-4 w-4" />
+                      Barber Portal
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+
+                {(roles.includes("admin") || roles.includes("staff")) && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/dashboard" className="cursor-pointer font-medium">
+                      <Scissors className="mr-2 h-4 w-4" />
+                      Admin Console
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem asChild>
                   <Link to="/my-bookings" className="cursor-pointer font-medium">
                     <CalendarCheck className="mr-2 h-4 w-4" />
                     My bookings
                   </Link>
                 </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive font-medium">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
@@ -134,13 +188,13 @@ export function SiteHeader() {
         </div>
 
         {/* Mobile Menu Drawer */}
-        <Sheet>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="xl:hidden rounded-none border-zinc-300 dark:border-zinc-700">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-80 border-l border-zinc-200 dark:border-zinc-800 bg-background p-6">
+          <SheetContent side="right" className="w-80 border-l border-zinc-200 dark:border-zinc-800 bg-background p-6 overflow-y-auto">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <SheetDescription className="sr-only">Site navigation links and account actions</SheetDescription>
             <div className="flex flex-col gap-6 mt-8">
@@ -150,18 +204,41 @@ export function SiteHeader() {
                   <Link
                     key={n.to}
                     to={n.to}
+                    onClick={() => setMobileMenuOpen(false)}
                     className="py-2.5 text-base font-extrabold tracking-widest uppercase hover:text-primary transition-colors"
                     activeProps={{ className: "text-primary underline decoration-2 underline-offset-4" }}
                   >
                     [ {n.label} ]
                   </Link>
                 ))}
+                
                 {email && (
                   <Link
                     to="/my-bookings"
+                    onClick={() => setMobileMenuOpen(false)}
                     className="py-2.5 text-base font-extrabold tracking-widest uppercase hover:text-primary transition-colors"
                   >
                     [ MY BOOKINGS ]
+                  </Link>
+                )}
+
+                {roles.includes("barber") && (
+                  <Link
+                    to="/barber"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 text-base font-extrabold tracking-widest uppercase hover:text-primary transition-colors"
+                  >
+                    [ BARBER PORTAL ]
+                  </Link>
+                )}
+
+                {(roles.includes("admin") || roles.includes("staff")) && (
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 text-base font-extrabold tracking-widest uppercase hover:text-primary transition-colors"
+                  >
+                    [ ADMIN CONSOLE ]
                   </Link>
                 )}
               </div>
@@ -173,23 +250,23 @@ export function SiteHeader() {
                   className="rounded-full bg-black text-white dark:bg-white dark:text-black font-extrabold text-xs tracking-[0.15em] uppercase w-full h-12"
                 >
                   {email ? (
-                    <Link to="/book" className="flex items-center justify-center gap-2">
+                    <Link to="/book" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2">
                       BOOK NOW <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
                     </Link>
                   ) : (
-                    <Link to="/auth" search={{ redirect: "/book" }} className="flex items-center justify-center gap-2">
+                    <Link to="/auth" search={{ redirect: "/book" }} onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2">
                       BOOK NOW <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
                     </Link>
                   )}
                 </Button>
 
                 {email ? (
-                  <Button variant="outline" onClick={signOut} className="rounded-full font-bold text-xs tracking-wider uppercase h-11">
+                  <Button variant="outline" onClick={() => { signOut(); setMobileMenuOpen(false); }} className="rounded-full font-bold text-xs tracking-wider uppercase h-11">
                     Sign out
                   </Button>
                 ) : (
                   <Button asChild variant="outline" className="rounded-full font-bold text-xs tracking-wider uppercase h-11">
-                    <Link to="/auth">Sign in</Link>
+                    <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
                   </Button>
                 )}
               </div>

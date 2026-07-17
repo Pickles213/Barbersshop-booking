@@ -160,6 +160,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          commission_rate: number
           created_at: string
           experience_years: number
           id: string
@@ -172,6 +173,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          commission_rate?: number
           created_at?: string
           experience_years?: number
           id?: string
@@ -184,6 +186,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          commission_rate?: number
           created_at?: string
           experience_years?: number
           id?: string
@@ -671,6 +674,7 @@ export type Database = {
           about_video_url: string | null
           close_time: string
           facebook_url: string | null
+          google_review_url: string | null
           hero_slideshow: string[] | null
           id: number
           instagram_url: string | null
@@ -699,6 +703,7 @@ export type Database = {
           about_video_url?: string | null
           close_time?: string
           facebook_url?: string | null
+          google_review_url?: string | null
           hero_slideshow?: string[] | null
           id?: number
           instagram_url?: string | null
@@ -727,6 +732,7 @@ export type Database = {
           about_video_url?: string | null
           close_time?: string
           facebook_url?: string | null
+          google_review_url?: string | null
           hero_slideshow?: string[] | null
           id?: number
           instagram_url?: string | null
@@ -867,6 +873,146 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discounts: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          expiry_date: string | null
+          id: string
+          is_active: boolean
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type: string
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          value?: number
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          discount_id: string | null
+          id: string
+          notes: string | null
+          payment_method: string
+          walk_in_id: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          discount_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method: string
+          walk_in_id?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          discount_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          walk_in_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_walk_in_id_fkey"
+            columns: ["walk_in_id"]
+            isOneToOne: false
+            referencedRelation: "walk_ins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_commissions: {
+        Row: {
+          barber_id: string
+          booking_id: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          gross_amount: number
+          id: string
+          walk_in_id: string | null
+        }
+        Insert: {
+          barber_id: string
+          booking_id?: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at?: string
+          gross_amount: number
+          id?: string
+          walk_in_id?: string | null
+        }
+        Update: {
+          barber_id?: string
+          booking_id?: string | null
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          walk_in_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_commissions_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barber_commissions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barber_commissions_walk_in_id_fkey"
+            columns: ["walk_in_id"]
+            isOneToOne: false
+            referencedRelation: "walk_ins"
             referencedColumns: ["id"]
           },
         ]

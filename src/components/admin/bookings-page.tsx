@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Search, Trash2, Star, Receipt } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, Star, Receipt, CreditCard, ChevronsUpDown, Check } from "lucide-react";
 import { BookingReceiptDialog } from "./booking-receipt-dialog";
+import { CheckoutDialog } from "./checkout-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,11 +24,14 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 type Status = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show";
 
 type Booking = {
   id: string; reference: string; customer_name: string; customer_phone: string | null;
+  customer_email: string | null; user_id: string | null;
   barber_id: string | null; service_id: string | null; booking_date: string; start_time: string;
   status: Status; price: number;
   barber?: { name: string } | null;
@@ -47,10 +51,37 @@ export function BookingsPage() {
   const [editing, setEditing] = useState<Booking | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<Booking | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const today = new Date().toLocaleDateString("sv-SE");
+  const [checkoutBooking, setCheckoutBooking] = useState<Booking | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [form, setForm] = useState({
-    customer_name: "", customer_phone: "", barber_id: "", service_id: "",
+    customer_name: "", customer_phone: "", customer_email: "", user_id: "", barber_id: "", service_id: "",
     booking_date: today, start_time: "10:00", status: "pending" as Status, price: 0,
+  });
+
+  const { data: existingCustomers = [] } = useQuery({
+    queryKey: ["existing_customers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .order("full_name", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      const seen = new Map<string, { name: string; phone: string | null; email: string | null; user_id: string | null }>();
+      for (const r of data ?? []) {
+        const key = (r.id ?? r.email ?? r.phone ?? r.full_name ?? "").toString().toLowerCase();
+        if (!key || seen.has(key)) continue;
+        seen.set(key, {
+          name: r.full_name ?? r.email ?? "Unnamed",
+          phone: r.phone,
+          email: r.email,
+          user_id: r.id,
+        });
+      }
+      return Array.from(seen.values());
+    },
   });
 
 
@@ -79,7 +110,14 @@ export function BookingsPage() {
 
   const upsert = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, barber_id: form.barber_id || null, service_id: form.service_id || null };
+      const payload = { 
+        ...form, 
+        barber_id: form.barber_id || null, 
+        service_id: form.service_id || null,
+        user_id: form.user_id || null,
+        customer_email: form.customer_email || null,
+        customer_phone: form.customer_phone || null
+      };
       if (editing) {
         const { error } = await supabase.from("bookings").update(payload).eq("id", editing.id);
         if (error) throw error;
@@ -117,6 +155,7 @@ export function BookingsPage() {
     setEditing(b);
     setForm({
       customer_name: b.customer_name, customer_phone: b.customer_phone ?? "",
+      customer_email: b.customer_email ?? "", user_id: b.user_id ?? "",
       barber_id: b.barber_id ?? "", service_id: b.service_id ?? "",
       booking_date: b.booking_date, start_time: b.start_time.slice(0, 5), status: b.status, price: b.price,
     });
@@ -124,7 +163,7 @@ export function BookingsPage() {
   };
   const startNew = () => {
     setEditing(null);
-    setForm({ customer_name: "", customer_phone: "", barber_id: "", service_id: "",
+    setForm({ customer_name: "", customer_phone: "", customer_email: "", user_id: "", barber_id: "", service_id: "",
       booking_date: today, start_time: "10:00", status: "pending", price: 0 });
     setOpen(true);
   };
@@ -157,6 +196,71 @@ export function BookingsPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit booking" : "New booking"}</DialogTitle></DialogHeader>
               <div className="grid grid-cols-2 gap-3 overflow-hidden">
+                <div className="col-span-2 space-y-1.5 min-w-0">
+                  <Label>Link registered customer profile</Label>
+                  <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {form.customer_email ? `${form.customer_name} (${form.customer_email})` : "Search user account…"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search by name, phone, email…" />
+                        <CommandList>
+                          <CommandEmpty>No matching customer.</CommandEmpty>
+                          <CommandGroup>
+                            {form.user_id && (
+                              <CommandItem
+                                value="__clear__"
+                                onSelect={() => {
+                                  setForm({ ...form, user_id: "", customer_email: "" });
+                                  setCustomerPickerOpen(false);
+                                }}
+                              >
+                                Clear selection (treat as guest)
+                              </CommandItem>
+                            )}
+                            {existingCustomers.map((c, i) => {
+                              const key = `${c.user_id ?? c.email ?? c.phone ?? c.name}-${i}`;
+                              const searchValue = [c.name, c.email, c.phone].filter(Boolean).join(" ");
+                              return (
+                                <CommandItem
+                                  key={key}
+                                  value={searchValue}
+                                  onSelect={() => {
+                                    setForm({
+                                      ...form,
+                                      customer_name: c.name,
+                                      customer_phone: c.phone ?? form.customer_phone,
+                                      customer_email: c.email ?? "",
+                                      user_id: c.user_id ?? "",
+                                    });
+                                    setCustomerPickerOpen(false);
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", form.user_id === c.user_id ? "opacity-100" : "opacity-0")} />
+                                  <div className="flex flex-col">
+                                    <span className="text-sm">{c.name}</span>
+                                    <span className="text-xs text-muted-foreground">{c.email ?? c.phone ?? "—"}</span>
+                                  </div>
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <div className="col-span-2 space-y-1.5 min-w-0"><Label>Customer name</Label>
                   <Input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
                 </div>
@@ -275,7 +379,17 @@ export function BookingsPage() {
                   <TableCell>{b.booking_date}</TableCell>
                   <TableCell>{formatTime(b.start_time.slice(0, 5))}</TableCell>
                   <TableCell>
-                    <Select value={b.status} onValueChange={(v) => updateStatus.mutate({ id: b.id, status: v as Status })}>
+                    <Select
+                      value={b.status}
+                      onValueChange={(v) => {
+                        if (v === "completed") {
+                          setCheckoutBooking(b);
+                          setCheckoutOpen(true);
+                        } else {
+                          updateStatus.mutate({ id: b.id, status: v as Status });
+                        }
+                      }}
+                    >
                       <SelectTrigger className="h-7 w-32 border-0 p-0 [&>svg]:hidden">
                         <BookingStatusBadge status={b.status} />
                       </SelectTrigger>
@@ -286,6 +400,20 @@ export function BookingsPage() {
                   </TableCell>
                   <TableCell>₱{Number(b.price).toLocaleString()}</TableCell>
                   <TableCell className="text-right">
+                    {b.status !== "completed" && b.status !== "cancelled" && b.status !== "no_show" && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                        onClick={() => {
+                          setCheckoutBooking(b);
+                          setCheckoutOpen(true);
+                        }}
+                        title="Checkout &amp; Bill"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button size="icon" variant="ghost" onClick={() => { setSelectedReceipt(b); setReceiptOpen(true); }} title="View Receipt"><Receipt className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => startEdit(b)}><Pencil className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete?")) remove.mutate(b.id); }}><Trash2 className="h-4 w-4" /></Button>
@@ -300,6 +428,15 @@ export function BookingsPage() {
         isOpen={receiptOpen} 
         onOpenChange={setReceiptOpen} 
         booking={selectedReceipt} 
+      />
+      <CheckoutDialog
+        isOpen={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        bookingId={checkoutBooking?.id}
+        customerName={checkoutBooking?.customer_name ?? ""}
+        basePrice={checkoutBooking?.price ?? 0}
+        barberId={checkoutBooking?.barber_id ?? null}
+        onSuccess={() => qc.invalidateQueries({ queryKey: ["bookings"] })}
       />
     </div>
   );

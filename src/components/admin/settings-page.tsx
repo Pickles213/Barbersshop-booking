@@ -54,12 +54,23 @@ async function uploadFile(bucket: string, folder: string, file: File, isVideo: b
 
 export function SettingsPage() {
   const qc = useQueryClient();
-  const { data: settings } = useQuery({
+  const { data: settings, error: queryError } = useQuery({
     queryKey: ["shop_settings"],
-    queryFn: async () => (await supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle()).data,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle();
+      if (error) {
+        console.error("Settings query error:", error);
+        throw error;
+      }
+      return data;
+    },
   });
   const [s, setS] = useState<any>(null);
-  useEffect(() => { if (settings) setS(settings); }, [settings]);
+  useEffect(() => { 
+    if (settings !== undefined && settings !== null) {
+      setS(settings); 
+    }
+  }, [settings]);
 
   const [selectedBarber, setSelectedBarber] = useState("");
   const [selectedService, setSelectedService] = useState("");
@@ -119,6 +130,15 @@ export function SettingsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["holidays"] }),
   });
 
+  if (queryError) {
+    return (
+      <div className="p-6 text-red-500 bg-red-50 dark:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-900/30">
+        <h3 className="font-bold font-mono text-sm uppercase">[ Error Loading Settings ]</h3>
+        <p className="text-xs font-mono mt-2">{(queryError as any).message || String(queryError)}</p>
+      </div>
+    );
+  }
+
   if (!s) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   return (
@@ -163,6 +183,13 @@ export function SettingsPage() {
           <div className="space-y-1.5 min-w-0"><Label>Instagram URL</Label><Input value={s.instagram_url ?? ""} onChange={(e) => setS({ ...s, instagram_url: e.target.value })} placeholder="https://instagram.com/..." /></div>
           <div className="space-y-1.5 min-w-0"><Label>TikTok URL</Label><Input value={s.tiktok_url ?? ""} onChange={(e) => setS({ ...s, tiktok_url: e.target.value })} placeholder="https://tiktok.com/@..." /></div>
           <div className="space-y-1.5 min-w-0"><Label>X (Twitter) URL</Label><Input value={s.x_url ?? ""} onChange={(e) => setS({ ...s, x_url: e.target.value })} placeholder="https://x.com/..." /></div>
+          <div className="space-y-1.5 min-w-0 md:col-span-2">
+            <Label>Google Review URL (Redirect Funnel)</Label>
+            <Input value={s.google_review_url ?? ""} onChange={(e) => setS({ ...s, google_review_url: e.target.value })} placeholder="https://g.page/r/.../review or https://search.google.com/local/writereview?placeid=..." />
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              If set, customers leaving 4 or 5-star reviews on the website will be prompted to also post on Google.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

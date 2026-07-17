@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, UserPlus, CheckCircle2, XCircle, Loader2, Search, Radio, Scissors, Star } from "lucide-react";
+import { Clock, UserPlus, CheckCircle2, XCircle, Loader2, Search, Radio, Scissors, Star, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { CheckoutDialog } from "./checkout-dialog";
 
 import { DashboardHeader } from "./dashboard-header";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,8 @@ export function WalkInsPage() {
   } | null>(null);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [barberId, setBarberId] = useState<string>("");
+  const [checkoutWalkin, setCheckoutWalkin] = useState<any | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
 
 
@@ -377,9 +380,13 @@ export function WalkInsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => updateWalkin.mutate({ id: w.id, patch: { status: "completed" } })}
+                    className="text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-950/10"
+                    onClick={() => {
+                      setCheckoutWalkin(w);
+                      setCheckoutOpen(true);
+                    }}
                   >
-                    <CheckCircle2 className="mr-1 h-4 w-4" /> Done
+                    <CreditCard className="mr-1.5 h-4 w-4" /> Checkout
                   </Button>
                 )}
                 <Button
@@ -394,6 +401,15 @@ export function WalkInsPage() {
           ))}
         </CardContent>
       </Card>
+      <CheckoutDialog
+        isOpen={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        walkInId={checkoutWalkin?.id}
+        customerName={checkoutWalkin?.customer_name ?? ""}
+        basePrice={checkoutWalkin?.service?.price ?? 0}
+        barberId={checkoutWalkin?.barber_id ?? null}
+        onSuccess={() => qc.invalidateQueries({ queryKey: ["walk_ins"] })}
+      />
     </div>
   );
 }

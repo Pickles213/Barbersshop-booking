@@ -201,7 +201,7 @@ function AboutPage() {
           </span>
 
           <div className="mt-6 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-            <h1 className="text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black tracking-tighter uppercase leading-[0.85] select-none text-black dark:text-white">
+            <h1 className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black tracking-tighter uppercase leading-[0.85] select-none text-black dark:text-white break-words">
               {heroTitle}
             </h1>
             <p className="max-w-md text-sm md:text-base text-zinc-500 dark:text-zinc-400 font-light leading-relaxed pb-3">

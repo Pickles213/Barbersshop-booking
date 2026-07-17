@@ -1,0 +1,40 @@
+# Phase 2 Implementation Walkthrough
+
+We have implemented all features in **Phase 2 — Retention/Growth** to track POS checkouts, manage discounts, calculate barber commissions, roll up financial reports, and funnel reviews to Google.
+
+---
+
+## Changes Implemented
+
+### 1. Database Migrations & Schema updates
+- Created migration SQL [20260718000000_phase2_pos_and_commissions.sql](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/supabase/migrations/20260718000000_phase2_pos_and_commissions.sql):
+  - Added `google_review_url` to `shop_settings`.
+  - Added `commission_rate` to `barbers` (defaulting to 50%).
+  - Added `discounts` table (handles promo codes and percentage/flat amount types).
+  - Added `payments` table (logs cash, gcash, maya, card payment references).
+  - Added `barber_commissions` table (stores barber cuts).
+  - Seeded POS & commissions permissions (`pos.manage`, `commissions.view_own`, `commissions.manage`).
+- Updated frontend typescript definitions in [types.ts](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/integrations/supabase/types.ts).
+
+### 2. POS Billing & Checkout Dialog
+- Created a new [CheckoutDialog](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/components/admin/checkout-dialog.tsx) component. It allows admins to:
+  - Select payment method (Cash, GCash, Maya, Card).
+  - Apply active discount promo codes or input a manual override amount.
+  - Formulate and record payment logs, calculate and post barber commissions, and update checkout state.
+- Integrated the Checkout Dialog into Bookings page [bookings-page.tsx](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/components/admin/bookings-page.tsx) and Walk-ins page [walk-ins-page.tsx](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/components/admin/walk-ins-page.tsx) to block direct completions without billing logs.
+
+### 3. Barber Earnings tab
+- Updated Barber Portal [barber.tsx](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/routes/barber.tsx) to query and display a **Commission Ledger** listing dates, gross client costs, rates, and individual earnings per service. Added three cards summarising:
+  - Total Commissions Earned
+  - Total Services Completed
+  - Average Earnings Per Cut
+
+### 4. Admin Reports update
+- Overhauled Reports page [reports-page.tsx](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/components/admin/reports-page.tsx) to query payments and commissions:
+  - Displays Total Sales (Gross), Barber Commissions Paid, Net Shop Profit, and Booking counts.
+  - Renders a new **Sales by Payment Method** pie chart.
+  - Lists a detailed **Barber Payroll** summary table (Services Done, Gross Sales, Commissions Payout, Shop Share).
+
+### 5. Google Review Funnel
+- Added input field for Google Review URL in settings page [settings-page.tsx](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/components/admin/settings-page.tsx).
+- Updated [site-layout.tsx](file:///c:/Users/James/OneDrive/Documents/Code/southside/latest_southside/src/components/site/site-layout.tsx): if a customer submits a 4 or 5-star review, a thank you view prompts them to write the review on Google with a direct link to the shop's Google Business profile.
