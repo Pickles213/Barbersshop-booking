@@ -22,6 +22,7 @@ const NAV = [
   { to: "/barbers", label: "BARBERS" },
   { to: "/queue", label: "LIVE QUEUE" },
   { to: "/contact", label: "CONTACT" },
+  { to: "/about", label: "ABOUT" },
 ] as const;
 
 export function SiteHeader() {

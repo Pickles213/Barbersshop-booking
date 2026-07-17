@@ -15,6 +15,7 @@ import {
   LogOut,
   ScrollText,
   Shield,
+  Heart,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const groups = [
       { title: "Roles", url: "/admin/roles", icon: Shield },
       { title: "Schedules", url: "/admin/schedules", icon: CalendarClock },
       { title: "Services", url: "/admin/services", icon: Scissors },
+      { title: "Charities", url: "/admin/charities", icon: Heart },
     ],
   },
   {

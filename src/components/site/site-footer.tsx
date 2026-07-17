@@ -103,6 +103,11 @@ export function SiteFooter() {
                   [ 05 ] Contact & Location
                 </Link>
               </li>
+              <li>
+                <Link to="/about" className="hover:text-white transition-colors">
+                  [ 06 ] About Us
+                </Link>
+              </li>
             </ul>
           </div>
 

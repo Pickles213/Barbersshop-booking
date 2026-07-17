@@ -168,6 +168,67 @@ export function SettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>About Us Page Content</CardTitle>
+          <CardDescription>Edit the hero banner, story text, and establishment year shown on the public About Us page.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Hero Banner Title</Label>
+              <Input
+                value={s.about_hero_title ?? ""}
+                onChange={(e) => setS({ ...s, about_hero_title: e.target.value })}
+                placeholder="e.g. OUR STORY"
+              />
+              <p className="text-[11px] text-muted-foreground">The huge text display in the hero banner.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Hero Banner Subtitle</Label>
+              <Input
+                value={s.about_hero_subtitle ?? ""}
+                onChange={(e) => setS({ ...s, about_hero_subtitle: e.target.value })}
+                placeholder="Brief description under the hero title..."
+              />
+              <p className="text-[11px] text-muted-foreground">Introductory text shown next to the main title.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Section Heading</Label>
+              <Input
+                value={s.about_heading ?? ""}
+                onChange={(e) => setS({ ...s, about_heading: e.target.value })}
+                placeholder="e.g. BUILT ON THE SOUTHSIDE"
+              />
+              <p className="text-[11px] text-muted-foreground">The large heading above your story text. Displayed in uppercase.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Establishment Year</Label>
+              <Input
+                value={s.about_year ?? ""}
+                onChange={(e) => setS({ ...s, about_year: e.target.value })}
+                placeholder="e.g. 2024"
+              />
+              <p className="text-[11px] text-muted-foreground">Shown in the decorative "EST." block on the About page.</p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>About Story / Body Text</Label>
+            <textarea
+              value={s.about_body ?? ""}
+              onChange={(e) => setS({ ...s, about_body: e.target.value })}
+              placeholder="Tell your story here... Separate paragraphs with a blank line."
+              rows={8}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+            <p className="text-[11px] text-muted-foreground">Use blank lines between paragraphs. Each paragraph will be shown separately on the About page.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Homepage Assets</CardTitle>
           <CardDescription>
             Manage the images and videos displayed on the public landing page. Upload files to replace the default styling images.

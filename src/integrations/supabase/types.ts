@@ -88,6 +88,45 @@ export type Database = {
           },
         ]
       }
+      charities: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          video_url: string | null
+          event_date: string | null
+          sort_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+          location: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          video_url?: string | null
+          event_date?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          location?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          video_url?: string | null
+          event_date?: string | null
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          location?: string | null
+        }
+        Relationships: []
+      }
       barber_categories: {
         Row: {
           barber_id: string
@@ -649,6 +688,11 @@ export type Database = {
           tiktok_url: string | null
           updated_at: string
           x_url: string | null
+          about_hero_title: string | null
+          about_hero_subtitle: string | null
+          about_heading: string | null
+          about_body: string | null
+          about_year: string | null
         }
         Insert: {
           about_image_url?: string | null
@@ -672,6 +716,11 @@ export type Database = {
           tiktok_url?: string | null
           updated_at?: string
           x_url?: string | null
+          about_hero_title?: string | null
+          about_hero_subtitle?: string | null
+          about_heading?: string | null
+          about_body?: string | null
+          about_year?: string | null
         }
         Update: {
           about_image_url?: string | null
@@ -695,6 +744,11 @@ export type Database = {
           tiktok_url?: string | null
           updated_at?: string
           x_url?: string | null
+          about_hero_title?: string | null
+          about_hero_subtitle?: string | null
+          about_heading?: string | null
+          about_body?: string | null
+          about_year?: string | null
         }
         Relationships: []
       }

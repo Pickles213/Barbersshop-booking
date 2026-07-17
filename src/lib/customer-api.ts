@@ -9,6 +9,16 @@ export type Service = {
   duration_minutes: number;
 };
 
+export type CharityEntry = {
+  id: string;
+  title: string;
+  description: string | null;
+  video_url: string | null;
+  event_date: string | null;
+  sort_order: number;
+  location: string | null;
+};
+
 export type Barber = {
   id: string;
   name: string;
@@ -158,4 +168,15 @@ export async function fetchMyBookings(userId: string): Promise<MyBooking[]> {
 export async function cancelMyBooking(id: string) {
   const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
   if (error) throw error;
+}
+
+export async function fetchCharities(): Promise<CharityEntry[]> {
+  const { data, error } = await supabase
+    .from("charities")
+    .select("id,title,description,video_url,event_date,sort_order,location")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("event_date", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as CharityEntry[];
 }
